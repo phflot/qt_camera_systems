@@ -4,6 +4,7 @@ import time
 import numpy as np
 from multicamera_systems.pipeline import MultimodalWorker
 
+
 class MotionMagnificationThread(MultimodalWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
 
@@ -14,8 +15,9 @@ class MotionMagnificationThread(MultimodalWorker):
         self.warper = MagnificationTask()
         self.looper = AlphaLooper([1, 8], 0.5)
 
-    @pyqtSlot(int)
-    def control_command(self, command):
+    @pyqtSlot(object)
+    def control_command(self, event):
+        command = event.key()
         if command == Qt.Key.Key_Space:
             self.last_command = "static" if self.last_command == "dynamic" else "dynamic"
         if command in [Qt.Key.Key_1, Qt.Key.Key_2, Qt.Key.Key_3, Qt.Key.Key_4, Qt.Key.Key_5]:

@@ -41,10 +41,11 @@ class VideoWidget(QWidget):
 
 class SyncVideoLine(QWidget):
     '''Line on top with a frame from each camera'''
-    key_press_signal = pyqtSignal(int)
+    key_press_signal = pyqtSignal(object)
 
-    def __init__(self, cameras: list):
+    def __init__(self, cameras: list, focus_policy=Qt.FocusPolicy.NoFocus):
         super(SyncVideoLine, self).__init__()
+        self.setFocusPolicy(focus_policy)
 
         self.layout = qtw.QGridLayout(self)
 
@@ -70,15 +71,15 @@ class SyncVideoLine(QWidget):
             widget.resize(widget_width, self.height)
 
     def keyPressEvent(self, event):
-        self.key_press_signal.emit(event.key())
+        self.key_press_signal.emit(event)
 
 
 class VideoSwitcher(QWidget):
-    key_press_signal = pyqtSignal(int)
+    key_press_signal = pyqtSignal(object)
 
-    def __init__(self, cameras: list):
+    def __init__(self, cameras: list, focus_policy=Qt.FocusPolicy.StrongFocus):
         super(VideoSwitcher, self).__init__()
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFocusPolicy(focus_policy)
 
         self.cameras = cameras
         self.current_camera = 0
@@ -99,4 +100,4 @@ class VideoSwitcher(QWidget):
             self.current_camera = (self.current_camera - 1) % len(self.cameras)
             self.cameras[self.current_camera].new_frame.connect(self.video_widget.update_image)
         else:
-            self.key_press_signal.emit(event.key())
+            self.key_press_signal.emit(event)
