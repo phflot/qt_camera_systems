@@ -1,0 +1,1 @@
+# minimal demo requiring one thermal and one ximea camera

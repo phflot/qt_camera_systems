@@ -1,0 +1,1 @@
+# minimal demo using a single webcam
