@@ -2,8 +2,8 @@ from PyQt6 import QtWidgets as qtw
 from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6.QtCore import pyqtSignal, Qt
 import sys
-from multicamera_systems.cameras import XimeaCamera, WebcamCamera
-from multicamera_systems.pipeline import FrameGrabber, MotionMagnificationThread
+from multicamera_systems.cameras import XimeaCamera, WebcamCamera, FrameGrabber
+from multicamera_systems.pipeline import MotionMagnificationThread
 from multicamera_systems.ui import SyncVideoLine, VideoSwitcher
 
 
@@ -61,8 +61,22 @@ def momag_webcam():
 
 
 def momag_ximea():
-    pass
+
+    # set the ximea camera user id in the ximea tool
+    # set to None to use the first camera
+    # set to int to use the camera with the corresponding index
+    cam = XimeaCamera()
+
+    left = FrameGrabber(cam)
+    left.start()
+
+    app = QApplication(sys.argv)
+    a = VIScreenerMomagTest2(left)
+    a.show()
+
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
     momag_webcam()
+    # momag_ximea()

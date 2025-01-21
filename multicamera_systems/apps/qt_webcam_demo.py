@@ -2,9 +2,9 @@ import sys
 import PyQt6.QtWidgets as qtw
 from PyQt6.QtWidgets import QWidget, QApplication
 
-from multicamera_systems.cameras import WebcamCamera
+from multicamera_systems.cameras import WebcamCamera, FrameGrabber
 from multicamera_systems.ui import MrPlotterRows, SyncVideoLine, VideoSwitcher
-from multicamera_systems.pipeline import FrameGrabber, DataIOThread, DataFusionThread
+from multicamera_systems.pipeline import DataIOThread, DataFusionThread
 
 
 class RGBDemo(QWidget):

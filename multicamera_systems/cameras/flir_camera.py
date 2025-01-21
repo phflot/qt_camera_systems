@@ -12,7 +12,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 import numpy as np
 
 
-def __flir_check():
+def _flir_check():
     if not FLIR_AVAILABLE:
         raise ImportError("PySpin is not available. Please install it to use FLIR cameras.")
 
@@ -22,7 +22,7 @@ class ThermalGrabber(QThread):
 
     def __init__(self, i=0):
         QThread.__init__(self)
-        __flir_check()
+        _flir_check()
         self.__cam_id = i
         self.cam = None
         self.n_frame = 0

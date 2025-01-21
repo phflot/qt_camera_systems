@@ -2,6 +2,7 @@ import mediapipe as mp
 import numpy as np
 import cv2
 
+
 class Segmenter:
     def __init__(self):
         self.mp_face_segmentation = mp.solutions.selfie_segmentation.SelfieSegmentation(model_selection=0)

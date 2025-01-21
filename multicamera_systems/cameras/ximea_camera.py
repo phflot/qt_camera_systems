@@ -7,15 +7,25 @@ import numpy as np
 
 
 try:
+    import ximea
+    from ximea import xiapi
     from ximea.xiapi import Camera, Image
     XIMEA_AVAILABLE = True
 except ImportError:
     XIMEA_AVAILABLE = False
 
 
-def __ximea_check():
+def _ximea_check():
     if not XIMEA_AVAILABLE:
-        raise ImportError("The ximea module is not available. Please install it using 'pip install ximea'.")
+        raise ImportError("The ximea module is not available. Please install it from the ximea API installer.")
+
+
+def _is_camera_opened(camera):
+    try:
+        camera.get_param('device_sn')
+        return True
+    except xiapi.Xi_error:
+        return False
 
 
 def get_right_id():
@@ -29,7 +39,8 @@ def get_nir_id():
 def init_cam(cam, exp=20000):
     #from ximea.xiapi import Camera, Image, Xi_error
     #cam = Camera()
-    __ximea_check()
+    _ximea_check()
+    _ximea_check()
 
     try:
         cam.enable_auto_wb()
@@ -45,19 +56,28 @@ def init_cam(cam, exp=20000):
 
 
 class XimeaCamera(GenericCamera):
-    def __init__(self, sn):
-        __ximea_check()
+    def __init__(self, user_id=None):
+        _ximea_check()
         self.cam = Camera()
-        self.sn = sn
-        # self.cam.open_device_by_SN(sn)
-        self.cam.open_device_by("XI_OPEN_BY_USER_ID", sn)
+        self.user_id = user_id
+        if user_id is None:
+            for i in range(10):
+                if not _is_camera_opened(Camera(i)):
+                    user_id = i
+                    break
+            if user_id is None:
+                raise(ValueError("No camera available"))
+        if isinstance(user_id, str):
+            self.cam.open_device_by("XI_OPEN_BY_USER_ID", user_id)
+        else:
+            self.cam = Camera(user_id)
+            self.cam.open_device()
         init_cam(self.cam)
-        if sn == get_nir_id():
+        if user_id == get_nir_id():
             self.cam.set_imgdataformat('XI_MONO8')
         self.cam.set_param('downsampling_type', 'XI_SKIPPING')
         self.cam.set_param('downsampling', "XI_DWN_2x2")
-            #self.cam.set_param('width', 640)
-            #self.cam.set_param('height', 480)
+
         self.cam.start_acquisition()
         self.__image = Image()
         self.frame_counter = 0

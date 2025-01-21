@@ -29,6 +29,49 @@ class MultimodalWorker(QThread):
             lambda frame, n_frame, ts: frame_deque.append((n_frame, ts, frame)))
 
 
+class BlinkingRateWorker(MultimodalWorker):
+    change_blinking_rate = pyqtSignal(float, float)
+
+    def __init__(self):
+        MultimodalWorker.__init__(self)
+        self.blinkings = []
+
+    def run(self):
+        ears = deque(maxlen=3)
+
+        while(True):
+
+            # todo: get the mediapipe landmarks here!
+
+            p1 = 159
+            p2 = 145
+            p3 = 386
+            p4 = 374
+
+            def norm(e1, e2):
+                return math.sqrt((e1[0] - e2[0]) ** 2 +
+                                 (e1[1] - e2[1]) ** 2 +
+                                 (e1[2] - e2[2]) ** 2)
+
+            ear = norm(points3D[:, p1], points3D[:, p2]) + norm(points3D[:, p3], points3D[:, p4])
+            ear *= 0.5
+            ears.append(ear)
+            ears_blinking_rate.append(ear)
+            ears_timestamps.append(ts_thermal - ts_baseline)
+
+            ears_tmp = np.array(ears_blinking_rate)
+            if len(ears_tmp) > 100:
+                peaks, _ = find_peaks(-ears_tmp)
+                blinking_rate = len(peaks) / (ears_timestamps[-1] - ears_timestamps[0])
+                blinking_rate *= 60
+                self.change_blinking_rate.emit(blinking_rate, ears_timestamps[-1] - ears_timestamps[0])
+
+            ear = np.mean(ears)
+            self.change_ear_signal.emit(ear, ts_thermal - ts_baseline)
+
+            boundaries = [mouth_boundary, eye_left_boundary, eye_right_boundary]
+
+
 class HeartRateWorker(MultimodalWorker):
     change_hr_signal = pyqtSignal(float, float)
     change_hr_real_signal = pyqtSignal(float, float)
