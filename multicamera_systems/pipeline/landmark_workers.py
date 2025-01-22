@@ -1,18 +1,18 @@
-from .base_workers import LandmarkWorker
+from .base_workers import MultimodalWorker
 from PyQt6.QtCore import pyqtSignal
 import numpy as np
 import mediapipe as mp
 from multicamera_systems.tfake import ThermalLandmarks
 from neurovc.util import map_temp
-from time import time
+import time
 
 
-class ThermalLandmarkWorker(LandmarkWorker):
+class ThermalLandmarkWorker(MultimodalWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
     new_landmarks = pyqtSignal(np.ndarray, float, float)
 
     def __init__(self):
-        LandmarkWorker.__init__(self)
+        MultimodalWorker.__init__(self)
         self.landmarker = ThermalLandmarks()
 
     def run(self):
@@ -32,18 +32,12 @@ class ThermalLandmarkWorker(LandmarkWorker):
                 self.new_landmarks.emit(landmarks, counter, ts - ts_baseline)
                 counter += 1
 
-            time.sleep(1/300)
+            time.sleep(1/30)
 
+
+class MediapipeLandmarkWorker(MultimodalWorker):
     def __init__(self):
-        LandmarkWorker.__init__(self)
-
-    def run(self):
-        pass
-
-
-class MediapipeLandmarkWorker(LandmarkWorker):
-    def __init__(self):
-        LandmarkWorker.__init__(self)
+        MultimodalWorker.__init__(self)
 
         mp_face_mesh = mp.solutions.face_mesh
         self.face_mesh = mp_face_mesh.FaceMesh(

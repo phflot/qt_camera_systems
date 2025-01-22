@@ -220,8 +220,8 @@ class ThermalLandmarks:
         patch = padded_img[y_start:y_end, x_start:x_end]
 
         x = cv2.resize(patch, (224, 224))
-        cv2.imshow("test", cv2.normalize(x, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1))
-        cv2.waitKey(1)
+        # cv2.imshow("test", cv2.normalize(x, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1))
+        # cv2.waitKey(1)
         x = torch.from_numpy(x).to(torch.float32).to(self.device).permute(2, 0, 1).unsqueeze(0)
 
         with torch.no_grad():

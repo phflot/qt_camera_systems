@@ -9,35 +9,32 @@ from multicamera_systems.tfake import ThermalLandmarks
 from neurovc.util.IO_util import map_temp, normalize_color, draw_landmarks
 import cv2
 from collections import deque
+from .base_workers import LandmarkWorker
 
 
-class ThermalLandmarkWorker(MultimodalWorker):
+class ThermalLandmarkVisualizer(LandmarkWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
 
     def __init__(self):
-        MultimodalWorker.__init__(self)
-        self.landmarker = ThermalLandmarks()
+        LandmarkWorker.__init__(self)
 
     def run(self):
         ts_baseline = -1
-
         while True:
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
                 (n_frame, ts, frame) = cam[-1]
+                (n_frame, ts, landmarks) = self._landmarkers[i][-1]
                 if ts_baseline == -1:
                     ts_baseline = ts
 
-                frame_raw = map_temp(frame, "A655")
                 frame = normalize_color(frame, color_map=cv2.COLORMAP_INFERNO)
-
-                landmarks = self.landmarker.process(frame_raw)[0]
                 frame = draw_landmarks(frame, landmarks)
 
                 self.new_frame.emit(frame, 0, ts - ts_baseline)
 
-            time.sleep(1/30)
+            time.sleep(1/300)
 
 
 class TemperatureWorker(MultimodalWorker):

@@ -1,10 +1,9 @@
 from multicamera_systems.cameras import ThermalGrabber
 from multicamera_systems.ui import VideoWidget
-from multicamera_systems.pipeline import ThermalLandmarkWorker, ThermalLandmarkVisualizer
+from multicamera_systems.pipeline import ThermalVizThread
 from PyQt6.QtWidgets import QApplication, QWidget
 import PyQt6.QtWidgets as qtw
 import sys
-import time
 
 
 class VIScreenerMomagTest2(QWidget):
@@ -12,13 +11,8 @@ class VIScreenerMomagTest2(QWidget):
         super().__init__()
         self.setWindowTitle("Thermal Camera - RoI Temperature")
 
-        thermal_lm = ThermalLandmarkWorker()
-        thermal_lm.add_cam(thermal)
-        thermal_lm.start()
-        time.sleep(1)
-
-        thermal_viz = ThermalLandmarkVisualizer()
-        thermal_viz.add_cam(thermal_lm)
+        thermal_viz = ThermalVizThread()
+        thermal_viz.add_cam(thermal)
         thermal_viz.start()
 
         self.resize(1000, 1000)
