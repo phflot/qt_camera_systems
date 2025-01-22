@@ -41,7 +41,6 @@ if __name__ == "__main__":
     left = FrameGrabber(cam_left)
 
     dataIO_worker = DataIOThread()
-
     visualization_worker = DataFusionThread()
     visualization_worker.add_cam(left)
 

@@ -2,7 +2,7 @@ from neurovc.momag import MagnificationTask, AlphaLooper
 from PyQt6.QtCore import pyqtSignal, pyqtSlot, Qt
 import time
 import numpy as np
-from multicamera_systems.pipeline import MultimodalWorker
+from multicamera_systems.pipeline.base_workers import MultimodalWorker
 
 
 class MotionMagnificationThread(MultimodalWorker):

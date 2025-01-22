@@ -1,35 +1,19 @@
 import time
-from PyQt6 import QtCore, QtGui
-import PyQt6.QtWidgets as qtw
-from PyQt6.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QPushButton
-from PyQt6.QtGui import QPixmap, QImage
-from PyQt6.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
-import pyqtgraph as pg
+from PyQt6.QtCore import pyqtSignal
 
-from scipy.spatial import ConvexHull
-from scipy.signal import savgol_filter, find_peaks
+from scipy.signal import find_peaks
 import numpy as np
 from collections import deque
 import mediapipe as mp
 import cv2
-from multicamera_systems.util import Segmenter, segment_image
+
+from multicamera_systems.pipeline import MultimodalWorker, LandmarkWorker
+from multicamera_systems.util import segment_skin
 from neurovc.util.IO_util import draw_landmarks
 import math
 
 
-class MultimodalWorker(QThread):
-    def __init__(self):
-        QThread.__init__(self)
-        self._cams = []
-
-    def add_cam(self, cam):
-        frame_deque = deque(maxlen=10)
-        self._cams.append(frame_deque)
-        cam.new_frame.connect(
-            lambda frame, n_frame, ts: frame_deque.append((n_frame, ts, frame)))
-
-
-class BlinkingRateWorker(MultimodalWorker):
+class BlinkingRateWorker(LandmarkWorker):
     change_blinking_rate = pyqtSignal(float, float)
 
     def __init__(self):
@@ -41,7 +25,6 @@ class BlinkingRateWorker(MultimodalWorker):
 
         while(True):
 
-            # todo: get the mediapipe landmarks here!
 
             p1 = 159
             p2 = 145
@@ -79,15 +62,12 @@ class HeartRateWorker(MultimodalWorker):
 
     def __init__(self):
         MultimodalWorker.__init__(self)
-        # self.segment_func = Segmenter()
         self.hr = None
         self.hr_real = None
 
     def run(self):
-        # example thread that does visualization and computationally heavy fusion / stereo, ...
         old_timestamp = [-1] * len(self._cams)
         old_id = [-1] * len(self._cams)
-        initialized = False
 
         mean_rgb_frames = []
         time_stamps = []
@@ -103,7 +83,6 @@ class HeartRateWorker(MultimodalWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
-                # (n_frame, ts, frame) = cam.frame_deque.pop()
                 (n_frame, ts, frame) = cam[-1]
                 counter += 1
                 if starting_time == -1:
@@ -111,19 +90,10 @@ class HeartRateWorker(MultimodalWorker):
 
                 n, m = frame.shape[0:2]
 
-                #(n_frame, ts) = cam.latest_frame.get_meta()
-
                 if n_frame is None or n_frame == old_id[i]:
                     continue
 
-                #frame = cam.latest_frame.get_frame()
-
-                # fps = 1000000 / (ts - old_timestamp[i] + 0.00001)
-
-                frame8b = frame.copy() # cv2.cvtColor(frame, cv2.COLOR_BAYER_BG2BGR)
-                # frame8b = cv2.resize(frame8b, None, fx=0.5, fy=0.5)
-                # frame8b = cv2.resize(frame8b, (256, 256))
-                # cv2.imshow("frame", frame8b)
+                frame8b = frame.copy()
 
                 #mask = self.segment_func(frame8b)
                 #frame8b = segment_image(frame8b, mask)
@@ -200,7 +170,8 @@ class DataFusionThread(MultimodalWorker):
     change_ear_signal = pyqtSignal(float, float)
     def __init__(self):
         MultimodalWorker.__init__(self)
-        self.segment_func = Segmenter()
+        # self.segment_func = Segmenter()
+        self.segment_func = segment_skin
         self.hr = None
         self.hr_real = None
         self.ear = None
@@ -261,7 +232,7 @@ class DataFusionThread(MultimodalWorker):
                 # frame8b = cv2.resize(frame8b, None, fx=0.5, fy=0.5)
                 # frame8b = cv2.resize(frame8b, (256, 256))
                 selfie_results = selfie.process(frame8b)
-                output_frame = frame8b
+                output_frame = self.segment_func(frame8b)
 
                 landmarks = face_mesh.process(frame8b).multi_face_landmarks
                 if landmarks is not None:
@@ -304,7 +275,8 @@ class DataFusionThread(MultimodalWorker):
                 if selfie_results.segmentation_mask is not None:
                     mask = selfie_results.segmentation_mask > 0.4
 
-                    frame8b = segment_image(frame8b, mask)
+                    # frame8b = segment_image(frame8b, mask)
+                    frame8b = self.segment_func(frame8b)
 
                     mean_rgb = np.sum(frame8b.astype(float), axis=(0, 1)) / np.sum(mask.astype(float), axis=(0, 1))
                     mean_rgb_frames.append(mean_rgb)
