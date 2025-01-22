@@ -7,7 +7,7 @@ from collections import deque
 import mediapipe as mp
 import cv2
 
-from multicamera_systems.pipeline import MultimodalWorker, LandmarkWorker
+from multicamera_systems.pipeline.base_workers import MultimodalWorker, LandmarkWorker
 from multicamera_systems.util import segment_skin
 from neurovc.util.IO_util import draw_landmarks
 import math

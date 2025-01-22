@@ -1,5 +1,6 @@
 try:
     import torch
+    import PyQt6
     import PySpin
     FLIR_AVAILABLE = True
 except ImportError:

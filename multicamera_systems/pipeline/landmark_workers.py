@@ -1,4 +1,4 @@
-from base_workers import LandmarkWorker
+from .base_workers import LandmarkWorker
 from PyQt6.QtCore import pyqtSignal
 import numpy as np
 import mediapipe as mp

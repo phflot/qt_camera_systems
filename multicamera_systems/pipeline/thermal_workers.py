@@ -8,7 +8,6 @@ import time
 from multicamera_systems.tfake import ThermalLandmarks
 from neurovc.util.IO_util import map_temp, normalize_color, draw_landmarks
 import cv2
-import mediapipe as mp
 from collections import deque
 
 

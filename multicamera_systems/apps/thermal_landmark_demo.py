@@ -1,6 +1,6 @@
-from multicamera_systems.pipeline import ThermalLandmarkWorker
 from multicamera_systems.cameras import ThermalGrabber
 from multicamera_systems.ui import VideoWidget
+from multicamera_systems.pipeline import ThermalLandmarkWorker
 from PyQt6.QtWidgets import QApplication, QWidget
 import PyQt6.QtWidgets as qtw
 import sys
