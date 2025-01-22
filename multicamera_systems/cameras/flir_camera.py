@@ -1,4 +1,5 @@
 try:
+    import torch
     import PySpin
     FLIR_AVAILABLE = True
 except ImportError:

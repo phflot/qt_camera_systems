@@ -7,8 +7,12 @@ from torchvision.transforms import Normalize
 import numpy as np
 
 from os.path import join
-from neurovc.facial_landmarks import TFWLandmarker
+from neurovc.thermal_landmarks import TFWLandmarker
 
+import requests
+from tqdm import tqdm
+import os
+from pathlib import Path
 
 MOBILENET = "mobilenetv2_100"
 RESNET = "resnet101"
@@ -16,14 +20,47 @@ RESNET = "resnet101"
 DEVICE = "cuda"
 
 
-def _get_model():
-    weights_path = "C:\\Users\\Philipp\\Documents\\backup_from_server\\rift_results\\training\\bbox"
+class _ModelDownloader:
+    def __init__(self, model_name, save_dir="~/.neurovc/models"):
+        self.model_name = model_name
+        self.save_dir = Path(os.path.expanduser(save_dir))
+        self.file_id = _file_id_map.get(model_name)
+        if not self.file_id:
+            raise ValueError(f"Model name '{model_name}' is not valid. Check the file_id_map.")
+        self.model_url = f"https://drive.google.com/uc?export=download&id={self.file_id}"
+        self.model_path = self.save_dir / f"{model_name}.pt"
 
-    # model = "joint_70_rgb_gray.pt"
-    model = "joint_478pt_bbox.pt"
+    def download_model(self):
+        self.save_dir.mkdir(parents=True, exist_ok=True)
 
-    model_path_final_joint = join(weights_path, "joint_converted.pt")
-    convert_model(join(weights_path, model), model_path_final_joint, n_landmarks=478, mode="JOINT")
+        if self.model_path.exists():
+            return self.model_path
+
+        print(f"Downloading {self.model_name}...")
+        response = requests.get(self.model_url, stream=True)
+        if response.status_code == 200:
+            total_size = int(response.headers.get('content-length', 0))
+            with open(self.model_path, "wb") as f, tqdm(
+                desc=f"Downloading {self.model_name}",
+                total=total_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    bar.update(len(chunk))
+            print(f"Model downloaded to {self.model_path}")
+        else:
+            raise Exception(f"Failed to download model: {response.status_code}")
+        return self.model_path
+
+
+def _get_model(model_name="478"):
+    downloader = _ModelDownloader(model_name)
+    weights_path = downloader.download_model()
+    model_path_final_joint = join(os.path.dirname(weights_path), "joint_converted.pt")
+    convert_model(weights_path, model_path_final_joint, n_landmarks=int(model_name), mode="JOINT")
     return model_path_final_joint
 
 
@@ -45,7 +82,8 @@ def convert_model(model_path_in, model_path_out, mode="", n_landmarks=70):
     model = DMMv2(n_landmarks=n_landmarks)
     dmm = nn.DataParallel(model, device_ids=[0])
     dmm.load_state_dict(
-        torch.load(model_path_in, map_location=torch.device('cpu')),
+        torch.load(model_path_in, map_location=torch.device('cpu'),
+                   weights_only=True),
         strict=False)
     torch.save(dmm.module.state_dict(), model_path_out)
 
@@ -69,7 +107,7 @@ class DMMv2(nn.Module):
 
         self.n_landmarks = n_landmarks
         self.fc = nn.Linear(1280, n_landmarks * (self.use_depth + 3))
-        nn.init.xavier_uniform(self.fc.weight)
+        nn.init.xavier_uniform_(self.fc.weight)
 
         self.fc.requires_grad_(True)
         self.act = nn.ReLU()
@@ -88,29 +126,17 @@ class DMMv2(nn.Module):
 class ThermalLandmarks:
     def __init__(self, model_path=None, device="cpu",
                  gpus=[0, 1], eta=0.75, max_lvl=0, stride=100, n_landmarks=478, mode="RGB", refine_landmarks=True,
-                 normalize=False):
+                 normalize=True):
 
         self.face_tracker = TFWLandmarker()
 
         dmm = DMMv2(n_landmarks=n_landmarks)
+        self.n_landmarks = n_landmarks
 
         model_path = _get_model()
         print(model_path)
-        dmm.load_state_dict(torch.load(model_path),
+        dmm.load_state_dict(torch.load(model_path, weights_only=True),
                             strict=False) # map_location=torch.device('cpu')))
-
-        
-        #state_dict = torch.load(model_path, map_location=torch.device('cpu'))
-
-        #new_state_dict = {}
-        #for key, value in state_dict.items():
-        #    if key.startswith('module.'):
-        #        new_key = key[7:]
-        #    else:
-        #        new_key = key
-        #    new_state_dict[new_key] = value
-
-        #dmm.load_state_dict(new_state_dict, strict=False)
 
 
         if device == "cuda":
@@ -136,10 +162,9 @@ class ThermalLandmarks:
             img_shape = image.shape[:2]
             wp = _warping_depth(self.eta, 100, *img_shape)
 
-
         if len(image.shape) == 2:
             image = image.astype(float)
-            self.last_sparse_lm = self.face_tracker.get_landmarks(image)
+            self.last_sparse_lm = self.face_tracker.detect(image)
             image = np.clip(image, 20, 40)
             image -= image.min()
             image /= image.max()
@@ -147,7 +172,6 @@ class ThermalLandmarks:
         else:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # image = image / 255
         if not sliding_window:
             return self.get_landmarks_single(image)
 
@@ -168,13 +192,9 @@ class ThermalLandmarks:
                 best_scores = scores
                 lm = lm_lvl * np.expand_dims(np.array([hx, hy]), 0)
 
-        # refine:
-        # lm, best_scores = self._refine_landmarks(image, lm)
-
         return lm, best_scores
 
     def _refine_landmarks(self, img, lm_scaled):
-        # Calculate bounding box around landmarks, ensure it is a square
         x_coords = lm_scaled[:, 0]
         y_coords = lm_scaled[:, 1]
 
@@ -183,60 +203,56 @@ class ThermalLandmarks:
         x_min = np.min(x_coords)
         x_max = np.max(x_coords)
 
-        largest_side = max(y_max - y_min, x_max - x_min) * 2
-        y_center = (y_max + y_min) / 2.2
+        largest_side = max(y_max - y_min, x_max - x_min) * 1.25
+        y_center = (y_max + y_min) / 2
         x_center = (x_max + x_min) / 2
 
         padding = int(largest_side // 2)
 
-        # Pad the image
         padded_img = cv2.copyMakeBorder(img, padding, padding, padding, padding, cv2.BORDER_CONSTANT,
                                         value=[0, 0, 0])
 
-        # Adjusted bounding box coordinates in the padded image
         x_start = int(x_center - largest_side / 2 + padding)
         y_start = int(y_center - largest_side / 2 + padding)
         x_end = int(x_center + largest_side / 2 + padding)
         y_end = int(y_center + largest_side / 2 + padding)
 
-        # Crop the image using the adjusted bounding box
         patch = padded_img[y_start:y_end, x_start:x_end]
 
-        # cv2.imshow("patch", patch)
         x = cv2.resize(patch, (224, 224))
+        cv2.imshow("test", cv2.normalize(x, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1))
+        cv2.waitKey(1)
         x = torch.from_numpy(x).to(torch.float32).to(self.device).permute(2, 0, 1).unsqueeze(0)
 
         with torch.no_grad():
             cropped_transformed = self.transform(x)
             refined_lm = self.dmm(cropped_transformed)
 
-        # Rescale new landmarks relative to the original image size
         refined_lm_scaled = (refined_lm[..., :-1] * largest_side).cpu().detach().squeeze().numpy()
         refined_lm_scaled += np.array([[x_start - padding, y_start - padding]])
         confidences = refined_lm[..., -1].cpu().detach().squeeze().numpy()
         return refined_lm_scaled, confidences
 
     def get_landmarks_single(self, img):
-        results = self.last_sparse_lm[0]
-        lm_scaled = results["landmarks"]
-        bbox = results["box"]
+        results = self.last_sparse_lm
+        if len(results) == 0:
+            return np.zeros((self.n_landmarks, 2)), np.zeros(self.n_landmarks)
+        lm_scaled = results[0]["landmarks"]
+        lm_scaled = np.array(lm_scaled).reshape((-1, 2))
+
+        bbox = results[0]["box"]
+        bbox = np.array(bbox).reshape((-1, 2))
         if lm_scaled is None:
             raise ValueError("Use mediapipe for dense RGB landmarks!")
         if -1 in lm_scaled:
             return lm_scaled, np.zeros(lm_scaled.shape[0])
-        lm_scaled, confidences = self._refine_landmarks(img, lm_scaled)
+        lm_scaled, confidences = self._refine_landmarks(img, bbox)
 
         return lm_scaled, confidences
 
     def get_landmarks(self, img, stride=50, refine=True):
         """Sliding window implementation for the landmarks"""
-        # TODO: extend to multiple of 224x224
-        #  roll by half of the image size, x, y, x + y OR use https://pytorch.org/docs/stable/generated/torch.nn.Unfold.html
-        #  apply this to multiple resolutions of the image to build predictions
-        #  non-maximum suppresion of the results / thresholding
-        #  more info: https://stackoverflow.com/questions/53972159/how-does-pytorchs-fold-and-unfold-work
-        #             difference of torch.unfold and nn.Unfold: https://stackoverflow.com/questions/73276139/why-is-nn-unfold-not-giving-me-the-same-results-as-unfold/73276874#73276874
-        #             https://www.anycodings.com/1questions/786761/pytorch-sliding-window-with-unfold-ampamp-fold
+
         img_dims = img.shape
         y_pad = 224 - img_dims[0] % 224
         x_pad = 224 - img_dims[1] % 224
@@ -278,6 +294,13 @@ class ThermalLandmarks:
         confidences = lm[..., -1].cpu().detach().numpy()
 
         return lm_scaled, best_score, confidences
+
+
+_file_id_map = {
+    "478": "1DZU3OOACp8gqxCxotZGwe3_gyNJCoY1p",
+    "70": "1DqBVVmw9NscDELsnCxB4Pt9ltVUuNoWR",
+}
+
 
 
 if __name__ == "__main__":
