@@ -4,7 +4,8 @@ from PyQt6 import QtWidgets as qtw
 from PyQt6.QtWidgets import QApplication, QWidget
 import sys
 from multicamera_systems.pipeline import (
-    HeartRateWorker, TemperatureWorker, BlinkingRateWorker, MotionMagnificationThread
+    HeartRateWorker, TemperatureWorker, BlinkingRateWorker, MotionMagnificationThread,
+    ThermalLandmarkWorker, MediapipeLandmarkWorker, ThermalLandmarkVisualizer
 )
 from multicamera_systems.ui import (
     MrPlotterRows, SyncVideoLine, VideoSwitcher, TextBlock
@@ -12,6 +13,7 @@ from multicamera_systems.ui import (
 from multicamera_systems.cameras import (
     XimeaCamera, ThermalGrabber, FrameGrabber
 )
+import time
 
 
 class VIScreener(QWidget):
@@ -19,31 +21,52 @@ class VIScreener(QWidget):
         super().__init__()
         self.setWindowTitle("Thermal Camera - RoI Temperature")
 
+        rgb_lm = MediapipeLandmarkWorker()
+        rgb_lm.add_cam(left)
+
+        thermal_lm = ThermalLandmarkWorker()
+        thermal_lm.add_cam(thermal)
+
         mapping_worker = TemperatureWorker()
-        mapping_worker.add_cam(thermal)
-        mapping_worker.start()
+        mapping_worker.add_cam(thermal_lm)
+
+        thermal_lm_viz = ThermalLandmarkVisualizer()
+        thermal_lm_viz.add_cam(thermal_lm)
 
         momag_worker = MotionMagnificationThread()
         momag_worker.add_cam(left)
-        momag_worker.start()
 
         hr_worker = HeartRateWorker()
         hr_worker.add_cam(left)
         hr_worker.start()
 
         ear_worker = BlinkingRateWorker()
-        ear_worker.add_cam(left)
+        ear_worker.add_cam(rgb_lm)
+
+        print("Starting cameras...")
+        thermal.start()
+        left.start()
+        rgb_lm.start()
+        thermal_lm.start()
+        time.sleep(1)
+
+        print("Starting workers...")
+        thermal_lm_viz.start()
+        mapping_worker.start()
         ear_worker.start()
+        momag_worker.start()
+        mapping_worker.start()
 
         self.resize(1000, 1000)
 
         self.video_line = SyncVideoLine([
-            mapping_worker, left, momag_worker])
+            thermal_lm_viz, left, momag_worker])
         self.video_line.resize(1000, 500)
         self.video_switcher = VideoSwitcher(
-            [mapping_worker, left, hr_worker]
+            [thermal_lm_viz, left, momag_worker, hr_worker]
         )
-        # self.video_switcher.key_press_signal.connect(momag_worker.control_command)
+        self.video_switcher.key_press_signal.connect(momag_worker.control_command)
+        self.video_switcher.key_press_signal.connect(thermal_lm_viz.control_command)
 
         self.plotter_rows = MrPlotterRows([
             (hr_worker.change_hr_real_signal, "Real Heart Rate", ["Heart Rate", "bpm"]),
@@ -56,7 +79,7 @@ class VIScreener(QWidget):
         self.text = TextBlock([
             (hr_worker.change_hr_real_signal, "Heart Rate", "bpm"),
             (mapping_worker.change_eye_temp, "Temperature", "°C"),
-            (mapping_worker.change_blinking_rate, "Blinking Rate", "bpm"),
+            (ear_worker.change_blinking_rate, "Blinking Rate", "bpm"),
         ])
 
         grid = qtw.QGridLayout()
@@ -78,9 +101,6 @@ def vi_screen_main():
     cam_left = XimeaCamera()
     left = FrameGrabber(cam_left)
     thermal = ThermalGrabber()
-
-    left.start()
-    thermal.start()
 
     app = QApplication(sys.argv)
     a = VIScreener(thermal, left)

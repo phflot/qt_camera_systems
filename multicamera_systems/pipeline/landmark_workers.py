@@ -36,6 +36,9 @@ class ThermalLandmarkWorker(MultimodalWorker):
 
 
 class MediapipeLandmarkWorker(MultimodalWorker):
+    new_frame = pyqtSignal(np.ndarray, float, float)
+    new_landmarks = pyqtSignal(np.ndarray, float, float)
+
     def __init__(self):
         MultimodalWorker.__init__(self)
 

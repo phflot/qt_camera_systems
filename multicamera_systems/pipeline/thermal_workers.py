@@ -3,7 +3,7 @@ from PIL import ImageDraw
 from scipy.spatial import ConvexHull
 from multicamera_systems.pipeline import MultimodalWorker
 import numpy as np
-from PyQt6.QtCore import pyqtSignal, QThread
+from PyQt6.QtCore import pyqtSignal, QThread, pyqtSlot, Qt
 import time
 from multicamera_systems.tfake import ThermalLandmarks
 from neurovc.util.IO_util import map_temp, normalize_color, draw_landmarks
@@ -14,6 +14,7 @@ from .base_workers import LandmarkWorker
 
 class ThermalLandmarkVisualizer(LandmarkWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
+    _lm_mode = "visible"
 
     def __init__(self):
         LandmarkWorker.__init__(self)
@@ -30,41 +31,29 @@ class ThermalLandmarkVisualizer(LandmarkWorker):
                     ts_baseline = ts
 
                 frame = normalize_color(frame, color_map=cv2.COLORMAP_INFERNO)
-                frame = draw_landmarks(frame, landmarks)
+                if self._lm_mode == "visible":
+                    frame = draw_landmarks(frame, landmarks)
 
                 self.new_frame.emit(frame, 0, ts - ts_baseline)
 
             time.sleep(1/300)
 
+    @pyqtSlot(object)
+    def control_command(self, event):
+        command = event.key()
+        if command == Qt.Key.Key_Down or command == Qt.Key.Key_Up:
+            self._lm_mode = "visible" if self._lm_mode == "invisible" else "invisible"
 
-class TemperatureWorker(MultimodalWorker):
-    new_frame = pyqtSignal(np.ndarray, float, float)
+
+class TemperatureWorker(LandmarkWorker):
     change_eye_temp = pyqtSignal(float, float)
     change_mouth_temp = pyqtSignal(float, float)
     change_ear_signal = pyqtSignal(float, float)
 
-    def _wrap_cam(self, cam):
-        frame_deque = deque(maxlen=10)
-        cam.new_frame.connect(
-            lambda frame, n_frame, ts: frame_deque.append((n_frame, ts, frame)))
-        return frame_deque
-
     def __init__(self):
-        QThread.__init__(self)
-        MultimodalWorker.__init__(self)
+        LandmarkWorker.__init__(self)
         self.respiration = []
         self.temperature = []
-        self.ear = []
-        self.landmarker = ThermalLandmarks()
-
-    def get_temperature(self):
-        return self.temperature
-
-    def get_respiration(self):
-        return self.respiration
-
-    def get_ear(self):
-        return self.ear
 
     def run(self):
 
@@ -81,71 +70,48 @@ class TemperatureWorker(MultimodalWorker):
         ears_blinking_rate = deque(maxlen=350)
         ears_timestamps = deque(maxlen=350)
         while(True):
-            # always waiting for the thermal frame and then getting the most recent ximea frames:
-            if len(self.thermal_cam) < 1 \
-                    or len(self.left_cam) < 1 or len(self.right_cam) < 1:
-                continue
 
-            (n_frame_thermal, ts_thermal, thermal) = self.thermal_cam[-1]
-            if n_frame_thermal == old_nframe:
-                continue
+            for (i, cam) in enumerate(self._cams):
+                if len(cam) < 1:
+                    continue
+                (n_frame, ts_thermal, frame) = cam[-1]
+                (n_frame, ts, pose_mapped) = self._landmarkers[i][-1]
 
-            if ts_baseline == -1:
-                ts_baseline = ts_thermal
-
-            old_nframe = n_frame_thermal
-
-            (n_frame, ts, left) = self.left_cam[-1]
-            (n_frame, ts, right) = self.right_cam[-1]
-
-            thermal = map_temp(thermal[:480, :640], "A655")
-            thermal_raw = thermal.copy()
-
-            thermal_mapped = self.landmarker.process(thermal)[0]
-            thermal = normalize_color(thermal, color_map=cv2.COLORMAP_INFERNO)
-            if -1 in thermal_mapped:
-                thermal_mapped = None
-
-            if thermal_mapped is not None:
-
-                #p1 = 27
-                #p2 = 23
-
-                #p3 = 257
-                #p4 = 253
-
-                temps = []
-                mask = get_thermal_mask(thermal, pose_mapped[mouth_boundary])
-                mouth = np.sum(thermal_raw[mask != 0]) / (0.000001 + np.sum(mask != 0))
-                mask1 = get_thermal_mask(thermal, pose_mapped[eye_left_boundary])
-                mask2 = get_thermal_mask(thermal, pose_mapped[eye_right_boundary])
-                mask1[mask2 != 0] = 255
-                mask1[mask2 != 0] = 255
-                try:
-                    eye = np.max(thermal_raw[mask1 != 0])
-                except:
-                    eye = 0
-
-                mask1[mask != 0] = 255
-
-                thermal_mask = thermal.copy()
-                thermal_mask[np.repeat(np.expand_dims(mask1, 2), 3, axis=2) == 0] = 0
-                # cv2.imshow("thermal mask", thermal_mask)
-
-                self.change_eye_temp.emit(eye, ts_thermal - ts_baseline)
-                self.change_mouth_temp.emit(mouth, ts_thermal - ts_baseline)
+                if ts_baseline == -1:
+                    ts_baseline = ts_thermal
 
 
-            #cv2.imshow("left", left)
-            #cv2.imshow("right", right)
+                thermal = map_temp(thermal[:480, :640], "A655")
+                thermal_raw = thermal.copy()
 
-            if thermal_mapped is not None:
-                #cv2.imshow("thermal", thermal_mapped)
-                self.new_frame.emit(thermal_mapped, 0, ts_thermal - ts_baseline)
-            else:
-                #cv2.imshow("thermal", thermal)
-                self.new_frame.emit(thermal, 0, ts_thermal - ts_baseline)
-            #cv2.waitKey(1)
+                if thermal_mapped is not None:
+
+                    #p1 = 27
+                    #p2 = 23
+
+                    #p3 = 257
+                    #p4 = 253
+
+                    temps = []
+                    mask = get_thermal_mask(thermal, pose_mapped[mouth_boundary])
+                    mouth = np.sum(thermal_raw[mask != 0]) / (0.000001 + np.sum(mask != 0))
+                    mask1 = get_thermal_mask(thermal, pose_mapped[eye_left_boundary])
+                    mask2 = get_thermal_mask(thermal, pose_mapped[eye_right_boundary])
+                    mask1[mask2 != 0] = 255
+                    mask1[mask2 != 0] = 255
+                    try:
+                        eye = np.max(thermal_raw[mask1 != 0])
+                    except:
+                        eye = 0
+
+                    mask1[mask != 0] = 255
+
+                    thermal_mask = thermal.copy()
+                    thermal_mask[np.repeat(np.expand_dims(mask1, 2), 3, axis=2) == 0] = 0
+
+                    self.change_eye_temp.emit(eye, ts_thermal - ts_baseline)
+                    self.change_mouth_temp.emit(mouth, ts_thermal - ts_baseline)
+
             time.sleep(1/300)
 
 

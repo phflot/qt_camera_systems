@@ -15,44 +15,58 @@ import math
 
 class BlinkingRateWorker(LandmarkWorker):
     change_blinking_rate = pyqtSignal(float, float)
+    change_ear_signal = pyqtSignal(float, float)
 
     def __init__(self):
-        MultimodalWorker.__init__(self)
+        LandmarkWorker.__init__(self)
         self.blinkings = []
 
     def run(self):
         ears = deque(maxlen=3)
+        ears_blinking_rate = deque(maxlen=350)
+        ears_timestamps = deque(maxlen=350)
+        ts_baseline = 0
 
         while(True):
+            for (i, cam) in enumerate(self._cams):
+                if len(cam) < 1:
+                    continue
+                (n_frame, ts_thermal, frame) = cam[-1]
+                (n_frame, ts, points3D) = self._landmarkers[i][-1]
 
+                p1 = 159
+                p2 = 145
+                p11 = 130
+                p21 = 243
 
-            p1 = 159
-            p2 = 145
-            p3 = 386
-            p4 = 374
+                p3 = 386
+                p4 = 374
+                p31 = 463
+                p41 = 359
 
-            def norm(e1, e2):
-                return math.sqrt((e1[0] - e2[0]) ** 2 +
-                                 (e1[1] - e2[1]) ** 2 +
-                                 (e1[2] - e2[2]) ** 2)
+                def norm(e1, e2):
+                    return math.sqrt((e1[0] - e2[0]) ** 2 +
+                                     (e1[1] - e2[1]) ** 2)
 
-            ear = norm(points3D[:, p1], points3D[:, p2]) + norm(points3D[:, p3], points3D[:, p4])
-            ear *= 0.5
-            ears.append(ear)
-            ears_blinking_rate.append(ear)
-            ears_timestamps.append(ts_thermal - ts_baseline)
+                def get_ear(e1, e2, e3, e4):
+                    return norm(e1, e2) / norm(e3, e4)
 
-            ears_tmp = np.array(ears_blinking_rate)
-            if len(ears_tmp) > 100:
-                peaks, _ = find_peaks(-ears_tmp)
-                blinking_rate = len(peaks) / (ears_timestamps[-1] - ears_timestamps[0])
-                blinking_rate *= 60
-                self.change_blinking_rate.emit(blinking_rate, ears_timestamps[-1] - ears_timestamps[0])
+                ear = get_ear(points3D[:, p1], points3D[:, p2], points3D[:, p11], points3D[:, p21])
+                ear += get_ear(points3D[:, p3], points3D[:, p4], points3D[:, p31], points3D[:, p41])
+                ear *= 0.5
+                ears.append(ear)
+                ears_blinking_rate.append(ear)
+                ears_timestamps.append(ts_thermal - ts_baseline)
 
-            ear = np.mean(ears)
-            self.change_ear_signal.emit(ear, ts_thermal - ts_baseline)
+                ears_tmp = np.array(ears_blinking_rate)
+                if len(ears_tmp) > 100:
+                    peaks, _ = find_peaks(-ears_tmp)
+                    blinking_rate = len(peaks) / (ears_timestamps[-1] - ears_timestamps[0])
+                    blinking_rate *= 60
+                    self.change_blinking_rate.emit(blinking_rate, ears_timestamps[-1] - ears_timestamps[0])
 
-            boundaries = [mouth_boundary, eye_left_boundary, eye_right_boundary]
+                ear = np.mean(ears)
+                self.change_ear_signal.emit(ear, ts_thermal - ts_baseline)
 
 
 class HeartRateWorker(MultimodalWorker):
@@ -97,7 +111,7 @@ class HeartRateWorker(MultimodalWorker):
 
                 #mask = self.segment_func(frame8b)
                 #frame8b = segment_image(frame8b, mask)
-                frame8b, mask = detect_skin_in_color(frame8b)
+                frame8b, mask = segment_skin(frame8b)
                 self.new_frame.emit(frame8b, n_frame, ts - starting_time)
 
                 mean_rgb = np.sum(frame8b.astype(float), axis=(0, 1)) / (0.000001 + np.sum(mask.astype(float), axis=(0, 1)))
