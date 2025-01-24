@@ -15,12 +15,8 @@ $ git clone ssh://git@erlgit.htwsaar.de:2222/snnu/computer-vision/qt_camera_syst
 - **Python 3.8+**  
 - **Spinnaker 4.0 SDK** and **Spinnaker 3.8 Python bindings** (for FLIR/PointGrey Thermal Cameras)  
 - **XIMEA API** (for XIMEA industrial cameras)  
-- **neurovc**  
-  - Install via:
-    ```
-    pip install neurovc
-    ```
-  This library contains utility functions, in particular for motion magnification (`MagnificationTask`, `AlphaLooper`, ...) and calibration / video IO helpers.
+- **neurovc**
+This library contains utility functions, in particular for motion magnification (`MagnificationTask`, `AlphaLooper`, ...) and calibration / video IO helpers.
 
 ## Contents of this Repository
 
@@ -59,16 +55,16 @@ onto a metal plate with the same pattern cutout.
 - Install the `Spinnaker SDK` from the resources folder in the repository:
   - [Spinnaker SDK Installer](resources/SpinnakerSDK_FULL_4.0.0.116_x64.exe)
 - Install the Python bindings 
-(windows):
+  - (windows):
     ```
     pip install .\resources\windows\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64.whl
     ```
-(mac):
+  - (mac):
     ```
     untar -xvf .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.tar.gz
     pip install .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.whl
     ```
-(linux): Use windows if you need instructions. Otherwise almost the same as mac.
+  - (linux): Almost the same as mac.
 
 4. **Install `XIMEA` API**:
 - Install the `XIMEA API` from the repository:
