@@ -37,4 +37,4 @@ def segment_skin(image):
     combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel)
 
     skin_segmented = cv2.bitwise_and(image, image, mask=combined_mask)
-    return skin_segmented
+    return skin_segmented, combined_mask

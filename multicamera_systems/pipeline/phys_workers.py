@@ -31,8 +31,12 @@ class BlinkingRateWorker(LandmarkWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
-                (n_frame, ts_thermal, frame) = cam[-1]
-                (n_frame, ts, points3D) = self._landmarkers[i][-1]
+                try:
+                    (n_frame, ts_thermal, frame) = cam[-1]
+                    (n_frame, ts, points3D) = self._landmarkers[i][-1]
+                except:
+                    time.sleep(1/300)
+                    continue
 
                 p1 = 159
                 p2 = 145
@@ -51,8 +55,8 @@ class BlinkingRateWorker(LandmarkWorker):
                 def get_ear(e1, e2, e3, e4):
                     return norm(e1, e2) / norm(e3, e4)
 
-                ear = get_ear(points3D[:, p1], points3D[:, p2], points3D[:, p11], points3D[:, p21])
-                ear += get_ear(points3D[:, p3], points3D[:, p4], points3D[:, p31], points3D[:, p41])
+                ear = get_ear(points3D[p1], points3D[p2], points3D[p11], points3D[p21])
+                ear += get_ear(points3D[p3], points3D[p4], points3D[p31], points3D[p41])
                 ear *= 0.5
                 ears.append(ear)
                 ears_blinking_rate.append(ear)
@@ -61,7 +65,7 @@ class BlinkingRateWorker(LandmarkWorker):
                 ears_tmp = np.array(ears_blinking_rate)
                 if len(ears_tmp) > 100:
                     peaks, _ = find_peaks(-ears_tmp)
-                    blinking_rate = len(peaks) / (ears_timestamps[-1] - ears_timestamps[0])
+                    blinking_rate = len(peaks) / (ears_timestamps[-1] - ears_timestamps[0] + 0.000001)
                     blinking_rate *= 60
                     self.change_blinking_rate.emit(blinking_rate, ears_timestamps[-1] - ears_timestamps[0])
 
@@ -111,7 +115,7 @@ class HeartRateWorker(MultimodalWorker):
 
                 #mask = self.segment_func(frame8b)
                 #frame8b = segment_image(frame8b, mask)
-                frame8b = segment_skin(frame8b)
+                frame8b, mask = segment_skin(frame8b)
                 self.new_frame.emit(frame8b, n_frame, ts - starting_time)
 
                 mean_rgb = np.sum(frame8b.astype(float), axis=(0, 1)) / (0.000001 + np.sum(mask.astype(float), axis=(0, 1)))
@@ -162,9 +166,6 @@ class HeartRateWorker(MultimodalWorker):
                     time_stamps = list(ts_arr[-100:])
                     mean_rgb_frames = list(np.array(mean_rgb_frames)[-100:])
 
-
-                cv2.imshow("segmented", frame8b)
-                cv2.waitKey(1)
                 #text = "#frame " + str(n_frame) + "\n fps = " + str(fps)
                 #cv2.putText(frame8b, text,
                 #            (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)

@@ -62,7 +62,7 @@ onto a metal plate with the same pattern cutout.
   - (mac):
     ```
     untar -xvf .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.tar.gz
-    pip install .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.whl
+    pip install .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.whl
     ```
   - (linux): Almost the same as mac.
 

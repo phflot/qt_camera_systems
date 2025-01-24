@@ -12,6 +12,14 @@ from collections import deque
 from .base_workers import LandmarkWorker
 
 
+_mouth_boundary = [203, 98, 97, 2, 326, 327, 423, 426, 436, 432,
+                   422, 424, 418, 421, 200, 201, 194, 204, 202, 138, 216, 212, 206]
+_eye_left_boundary = [46, 53, 52, 65, 55, 193, 245, 128, 121, 120, 119,
+                      118, 117, 111, 35, 124]
+_eye_right_boundary = [285, 417, 465, 357, 350, 349, 348, 347, 346,
+                       340, 265, 353, 276, 283, 282, 295]
+
+
 class ThermalLandmarkVisualizer(LandmarkWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
     _lm_mode = "visible"
@@ -25,8 +33,12 @@ class ThermalLandmarkVisualizer(LandmarkWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
-                (n_frame, ts, frame) = cam[-1]
-                (n_frame, ts, landmarks) = self._landmarkers[i][-1]
+                try:
+                    (n_frame, ts, frame) = cam[-1]
+                    (n_frame, ts, landmarks) = self._landmarkers[i][-1]
+                except:
+                    time.sleep(1/300)
+                    continue
                 if ts_baseline == -1:
                     ts_baseline = ts
 
@@ -74,43 +86,39 @@ class TemperatureWorker(LandmarkWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
-                (n_frame, ts_thermal, frame) = cam[-1]
-                (n_frame, ts, pose_mapped) = self._landmarkers[i][-1]
+                try:
+                    (n_frame, ts_thermal, frame) = cam[-1]
+                    (n_frame, ts, pose_mapped) = self._landmarkers[i][-1]
+                except:
+                    time.sleep(1/300)
+                    continue
+
+                if -1 in pose_mapped:
+                    continue
 
                 if ts_baseline == -1:
                     ts_baseline = ts_thermal
 
+                thermal_raw = frame.copy()
 
-                thermal = map_temp(thermal[:480, :640], "A655")
-                thermal_raw = thermal.copy()
-
-                if thermal_mapped is not None:
-
-                    #p1 = 27
-                    #p2 = 23
-
-                    #p3 = 257
-                    #p4 = 253
-
-                    temps = []
-                    mask = get_thermal_mask(thermal, pose_mapped[mouth_boundary])
+                temps = []
+                try:
+                    mask = get_thermal_mask(frame, pose_mapped[_mouth_boundary])
                     mouth = np.sum(thermal_raw[mask != 0]) / (0.000001 + np.sum(mask != 0))
-                    mask1 = get_thermal_mask(thermal, pose_mapped[eye_left_boundary])
-                    mask2 = get_thermal_mask(thermal, pose_mapped[eye_right_boundary])
-                    mask1[mask2 != 0] = 255
-                    mask1[mask2 != 0] = 255
-                    try:
-                        eye = np.max(thermal_raw[mask1 != 0])
-                    except:
-                        eye = 0
+                    mask1 = get_thermal_mask(frame, pose_mapped[_eye_left_boundary])
+                    mask2 = get_thermal_mask(frame, pose_mapped[_eye_right_boundary])
+                except:
+                    print("Failed to extract temperatures...")
+                    continue
+                mask1[mask2 != 0] = 255
+                mask1[mask2 != 0] = 255
+                try:
+                    eye = np.max(thermal_raw[mask1 != 0])
+                except:
+                    eye = 0
 
-                    mask1[mask != 0] = 255
-
-                    thermal_mask = thermal.copy()
-                    thermal_mask[np.repeat(np.expand_dims(mask1, 2), 3, axis=2) == 0] = 0
-
-                    self.change_eye_temp.emit(eye, ts_thermal - ts_baseline)
-                    self.change_mouth_temp.emit(mouth, ts_thermal - ts_baseline)
+                self.change_eye_temp.emit(eye, ts_thermal - ts_baseline)
+                self.change_mouth_temp.emit(mouth, ts_thermal - ts_baseline)
 
             time.sleep(1/300)
 

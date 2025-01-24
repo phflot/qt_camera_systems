@@ -38,7 +38,6 @@ class VIScreener(QWidget):
 
         hr_worker = HeartRateWorker()
         hr_worker.add_cam(left)
-        hr_worker.start()
 
         ear_worker = BlinkingRateWorker()
         ear_worker.add_cam(rgb_lm)
@@ -48,17 +47,23 @@ class VIScreener(QWidget):
         left.start()
         rgb_lm.start()
         thermal_lm.start()
-        time.sleep(1)
+        time.sleep(2)
 
         print("Starting workers...")
         thermal_lm_viz.start()
-        mapping_worker.start()
-        ear_worker.start()
+        time.sleep(0.5)
+        # ear_worker.start()
+        time.sleep(0.5)
         momag_worker.start()
-        mapping_worker.start()
+        time.sleep(0.5)
+        # hr_worker.start()
+        time.sleep(0.5)
+        # mapping_worker.start()
+        time.sleep(5)
 
         self.resize(1000, 1000)
 
+        print("Initializing video output and plots...")
         self.video_line = SyncVideoLine([
             thermal_lm_viz, left, momag_worker])
         self.video_line.resize(1000, 500)
@@ -82,6 +87,7 @@ class VIScreener(QWidget):
             (ear_worker.change_blinking_rate, "Blinking Rate", "bpm"),
         ])
 
+        print("Initializing UI...")
         grid = qtw.QGridLayout()
         grid.addWidget(self.video_line, 0, 0, 1, 3)
         grid.addWidget(self.text, 0, 3, 1, 1)
@@ -106,7 +112,6 @@ def vi_screen_main():
     a = VIScreener(thermal, left)
     a.show()
 
-    sys.exit(app.exec())
     sys.exit(app.exec())
 
 
