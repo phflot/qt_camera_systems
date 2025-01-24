@@ -58,10 +58,17 @@ onto a metal plate with the same pattern cutout.
 3. **Install `Spinnaker` SDK and Python bindings**:
 - Install the `Spinnaker SDK` from the resources folder in the repository:
   - [Spinnaker SDK Installer](resources/SpinnakerSDK_FULL_4.0.0.116_x64.exe)
-- Install the Python bindings:
+- Install the Python bindings 
+(windows):
     ```
-    pip install .\resources\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64.whl
+    pip install .\resources\windows\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64\spinnaker_python-4.0.0.116-cp38-cp38-win_amd64.whl
     ```
+(mac):
+    ```
+    untar -xvf .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.tar.gz
+    pip install .\resources\mac\spinnaker_python-4.1.0.172-cp38-cp38-macosx_13_0_arm64.whl
+    ```
+(linux): Use windows if you need instructions. Otherwise almost the same as mac.
 
 4. **Install `XIMEA` API**:
 - Install the `XIMEA API` from the repository:

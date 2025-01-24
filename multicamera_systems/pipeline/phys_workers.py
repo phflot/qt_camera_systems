@@ -111,7 +111,7 @@ class HeartRateWorker(MultimodalWorker):
 
                 #mask = self.segment_func(frame8b)
                 #frame8b = segment_image(frame8b, mask)
-                frame8b, mask = segment_skin(frame8b)
+                frame8b = segment_skin(frame8b)
                 self.new_frame.emit(frame8b, n_frame, ts - starting_time)
 
                 mean_rgb = np.sum(frame8b.astype(float), axis=(0, 1)) / (0.000001 + np.sum(mask.astype(float), axis=(0, 1)))
