@@ -125,7 +125,7 @@ class DMMv2(nn.Module):
 
 class ThermalLandmarks:
     def __init__(self, model_path=None, device="cpu",
-                 gpus=[0, 1], eta=0.75, max_lvl=0, stride=100, n_landmarks=478, mode="RGB", refine_landmarks=True,
+                 gpus=[0, 1], eta=0.75, max_lvl=0, stride=100, n_landmarks=478,
                  normalize=True):
 
         self.face_tracker = TFWLandmarker()
@@ -136,7 +136,7 @@ class ThermalLandmarks:
         model_path = _get_model()
         print(model_path)
         dmm.load_state_dict(torch.load(model_path, weights_only=True),
-                            strict=False) # map_location=torch.device('cpu')))
+                            strict=False)
 
 
         if device == "cuda":
@@ -220,8 +220,6 @@ class ThermalLandmarks:
         patch = padded_img[y_start:y_end, x_start:x_end]
 
         x = cv2.resize(patch, (224, 224))
-        # cv2.imshow("test", cv2.normalize(x, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1))
-        # cv2.waitKey(1)
         x = torch.from_numpy(x).to(torch.float32).to(self.device).permute(2, 0, 1).unsqueeze(0)
 
         with torch.no_grad():
@@ -267,25 +265,16 @@ class ThermalLandmarks:
 
         with torch.no_grad():
             x = torch.nn.functional.pad(torch.from_numpy(img).to(torch.float32), pad).to(self.device)
-            # x = torch.from_numpy(x).to(torch.float32).to(self.device)
             img_dims_new = x.shape
             img_unfold = x.unfold(0, 224, stride).unfold(1, 224, stride)
             s = img_unfold.shape
             img_unfold = img_unfold.reshape((s[0] * s[1],) + s[2:])
-            # for i, img in enumerate(img_unfold):
-            #    cv2.imshow(f"{i}", img.cpu().detach().permute(1, 2, 0).numpy().astype(np.uint8))
             lm = self.dmm(self.transform(img_unfold))
-            # best_score = lm[..., -1].mean(1).argsort()[2].item()
 
             best_scores = lm[..., -1].mean(1)
             best_score_idx = best_scores.argmin().item()
             best_score = best_scores[best_score_idx].item()
-            # print(f"best score: {best_score}")
-            # offset = torch.Tensor([stride * (best_score % s[1]) - x_pad_l, stride * (best_score // s[1]) - y_pad_l]).unsqueeze(0).to(DEVICE)
             offset = torch.Tensor([stride * (best_score_idx % s[1]), stride * (best_score_idx // s[1])]).unsqueeze(0).to(self.device)
-            #lm = (lm[best_score, :, :-1] * 224 + offset) * 1
-                 # np.expand_dims(np.array(np.array(img_dims[1::-1]) / img_dims_new[1::-1]), 0)
-        #return lm.cpu().detach().numpy() / np.expand_dims(np.array(img_dims[1::-1]), 0)
             lm = lm[best_score_idx]
             lm_out = lm[:, :-1] * 224 + offset
             lm_out = lm_out - torch.tensor([x_pad_l, y_pad_l]).unsqueeze(0).to(self.device)
@@ -300,16 +289,3 @@ _file_id_map = {
     "478": "1DZU3OOACp8gqxCxotZGwe3_gyNJCoY1p",
     "70": "1DqBVVmw9NscDELsnCxB4Pt9ltVUuNoWR",
 }
-
-
-
-if __name__ == "__main__":
-    weights_path = "C:\\Users\\Philipp\\Documents\\backup_from_server\\rift_results\\training\\bbox"
-
-    # model = "joint_70_rgb_gray.pt"
-    model = "joint_478pt_bbox.pt"
-
-    model_path_final_joint = join(weights_path, "joint_converted.pt")
-    convert_model(join(weights_path, model), model_path_final_joint, n_landmarks=478, mode="JOINT")
-    dmm = ThermalLandmarks(model_path_final_joint, n_landmarks=478, device="cuda", gpus=[0],
-                         max_lvl=-1, mode="JOINT", stride=20, normalize=True, refine_landmarks=False)

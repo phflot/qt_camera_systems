@@ -78,6 +78,18 @@ onto a metal plate with the same pattern cutout.
   <conda-env-path>\Lib\site-packages\
   ```
 
+## Run the applications
+
+To run the VIScreen_demo, connect one FLIR camera and one XiC ximea camera to your computer and run
+```
+python -m multicamera_systems.apps.VIScreen_demo
+```
+or 
+```
+python -m multicamera_systems.apps.VIScreen_webcam
+```
+for the webcam only version. The app can be controlled with the arrow keys, the space 
+
 
 ## Citation
 
