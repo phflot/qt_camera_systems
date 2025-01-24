@@ -27,8 +27,8 @@ class VIScreener(QWidget):
         thermal_lm = ThermalLandmarkWorker()
         thermal_lm.add_cam(thermal)
 
-        mapping_worker = TemperatureWorker()
-        mapping_worker.add_cam(thermal_lm)
+        temperature_worker = TemperatureWorker()
+        temperature_worker.add_cam(thermal_lm)
 
         thermal_lm_viz = ThermalLandmarkVisualizer()
         thermal_lm_viz.add_cam(thermal_lm)
@@ -56,9 +56,9 @@ class VIScreener(QWidget):
         time.sleep(0.5)
         momag_worker.start()
         time.sleep(0.5)
-        # hr_worker.start()
+        hr_worker.start()
         time.sleep(0.5)
-        # mapping_worker.start()
+        temperature_worker.start()
         time.sleep(5)
 
         self.resize(1000, 1000)
@@ -76,14 +76,14 @@ class VIScreener(QWidget):
         self.plotter_rows = MrPlotterRows([
             (hr_worker.change_hr_real_signal, "Real Heart Rate", ["Heart Rate", "bpm"]),
             (hr_worker.change_hr_signal, "POS", ["POS", ""]),
-            (ear_worker.change_ear_signal, "Eye open / closed signal", ["", "mm"]),
-            (mapping_worker.change_eye_temp, "Periorbital Temperature", ["Temperature", "°C"]),
-            (mapping_worker.change_mouth_temp, "Mouth Temperature", ["Temperature", "°C"])
+            (ear_worker.change_ear_signal, "Eye open / closed signal", ["", ""]),
+            (temperature_worker.change_eye_temp, "Periorbital Temperature", ["Temperature", "°C"]),
+            (temperature_worker.change_mouth_temp, "Mouth Temperature", ["Temperature", "°C"])
         ])
         self.plotter_rows.resize(100, 100)
         self.text = TextBlock([
             (hr_worker.change_hr_real_signal, "Heart Rate", "bpm"),
-            (mapping_worker.change_eye_temp, "Temperature", "°C"),
+            (temperature_worker.change_eye_temp, "Temperature", "°C"),
             (ear_worker.change_blinking_rate, "Blinking Rate", "bpm"),
         ])
 

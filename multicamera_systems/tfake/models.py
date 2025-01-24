@@ -236,7 +236,7 @@ class ThermalLandmarks:
     def get_landmarks_single(self, img):
         results = self.last_sparse_lm
         if len(results) == 0:
-            return np.zeros((self.n_landmarks, 2)), np.zeros(self.n_landmarks)
+            return - np.ones((self.n_landmarks, 2)), np.zeros(self.n_landmarks)
         lm_scaled = results[0]["landmarks"]
         lm_scaled = np.array(lm_scaled).reshape((-1, 2))
 

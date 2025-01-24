@@ -99,7 +99,8 @@ class TemperatureWorker(LandmarkWorker):
                 if ts_baseline == -1:
                     ts_baseline = ts_thermal
 
-                thermal_raw = frame.copy()
+                thermal_raw = map_temp(frame, "A655")
+                # thermal_raw = frame.copy()
 
                 temps = []
                 try:
