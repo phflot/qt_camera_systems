@@ -88,7 +88,11 @@ or
 ```
 python -m multicamera_systems.apps.VIScreen_webcam
 ```
-for the webcam only version. The app can be controlled with the arrow keys, the space 
+for the webcam only version. The app can be controlled with the arrow keys to turn landmarks on and off and switch the video view. 
+
+Space and numbers 1-5 control the motion magnification output.
+
+![Fig1](img/VIScreener.jpg)
 
 
 ## Citation
