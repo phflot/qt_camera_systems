@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 import time
 from PyQt6.QtCore import QThread
 from collections import deque
@@ -38,8 +49,6 @@ class DataIOThread(MultimodalWorker):
         MultimodalWorker.__init__(self)
 
     def run(self):
-        # example thread that can later do the hdf5 writing (pull left from the deque),
-        # right now it prints the current, effective framerate
         old_timestamp = [-1] * len(self._cams)
         old_id = [-1] * len(self._cams)
 
@@ -47,17 +56,6 @@ class DataIOThread(MultimodalWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) > 1:
                     (n_frame, ts, frame) = cam.popleft()
-
-                    # if n_frame != old_id[i] + 1 and old_id[i] != -1:
-                    #    print("Frame dropped!")
-
-                    try:
-                        fps = 1000000 / (ts - old_timestamp[i])
-                        text = "Framerate: " + str(fps) + "\n"
-                        # print(text)
-                    except:
-                        pass
-
                     old_id[i] = n_frame
                     old_timestamp[i] = ts
                     del(frame)

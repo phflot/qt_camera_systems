@@ -1,4 +1,13 @@
-__author__ = "Philipp Flotho"
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
 
 from .base_cameras import GenericCamera
 import cv2
@@ -37,8 +46,6 @@ def get_nir_id():
 
 
 def init_cam(cam, exp=20000):
-    #from ximea.xiapi import Camera, Image, Xi_error
-    #cam = Camera()
     _ximea_check()
     _ximea_check()
 
@@ -48,11 +55,6 @@ def init_cam(cam, exp=20000):
         print(e)
     cam.set_exposure(exp)
     cam.set_imgdataformat('XI_RGB24')
-    # cam.set_limit_bandwidth(cam.get_limit_bandwidth())
-    # cam.set_imgdataformat('XI_RAW8')
-    # cam.set_trigger_source('XI_TRG_SOFTWARE')
-    # cam.set_trigger_source('XI_TRG_SOFTWARE')
-    # cam.set_acq_timing_mode(1)
 
 
 class XimeaCamera(GenericCamera):
@@ -97,8 +99,4 @@ class XimeaCamera(GenericCamera):
         else:
             image = cv2.resize(image, None, fx=0.5, fy=0.5).astype(float)
 
-        #image[:, :, 0] *= 1.34
-        #image[:, :, 1] *= 1
-        #image[:, :, 2] *= 1.5
-        #image[image > 255] = 255
         return float(n_frame), float(ts), image.astype(np.uint8)

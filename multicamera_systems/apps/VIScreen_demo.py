@@ -52,7 +52,7 @@ class VIScreener(QWidget):
         print("Starting workers...")
         thermal_lm_viz.start()
         time.sleep(0.5)
-        # ear_worker.start()
+        ear_worker.start()
         time.sleep(0.5)
         momag_worker.start()
         time.sleep(0.5)

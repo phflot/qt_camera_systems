@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 import time
 from PyQt6.QtCore import pyqtSignal
 
@@ -5,7 +16,6 @@ from scipy.signal import find_peaks
 import numpy as np
 from collections import deque
 import mediapipe as mp
-import cv2
 
 from multicamera_systems.pipeline.base_workers import MultimodalWorker, LandmarkWorker
 from multicamera_systems.util import segment_skin
@@ -93,7 +103,7 @@ class HeartRateWorker(MultimodalWorker):
         hr_real_values = []
         hr_real_ts = []
 
-        fps = 15
+        fps = 20
         starting_time = -1
         counter = 0
 
@@ -106,15 +116,11 @@ class HeartRateWorker(MultimodalWorker):
                 if starting_time == -1:
                     starting_time = ts
 
-                n, m = frame.shape[0:2]
-
                 if n_frame is None or n_frame == old_id[i]:
                     continue
 
                 frame8b = frame.copy()
 
-                #mask = self.segment_func(frame8b)
-                #frame8b = segment_image(frame8b, mask)
                 frame8b, mask = segment_skin(frame8b)
                 self.new_frame.emit(frame8b, n_frame, ts - starting_time)
 
@@ -130,8 +136,7 @@ class HeartRateWorker(MultimodalWorker):
                                    np.arange(0, ts_arr.shape[0]))).astype(int)
                     idx = idx[-100:]
 
-                    start = time.time()
-                    signal = _pos_calculation(np.array(mean_rgb_frames)[idx])
+                    signal = _pos_calculation(np.array(mean_rgb_frames)[idx], fps)
 
                     fourier = np.fft.fft(signal)
                     freq = 60 * np.fft.fftfreq(signal.size, d=1/fps)
@@ -158,20 +163,8 @@ class HeartRateWorker(MultimodalWorker):
                     if len(hr_values) > 300:
                         hr_values = list(np.array(hr_values)[-300:])
 
-                    # freqs, spectrum = _createSpectrum(signal, 5)
-                    #print(signal.shape)
-                    #print("pos estimation took " + str(time.time() - start))
-                    #print("heart rate is " + str(np.mean(np.array(hr_values))))
-
                     time_stamps = list(ts_arr[-100:])
                     mean_rgb_frames = list(np.array(mean_rgb_frames)[-100:])
-
-                #text = "#frame " + str(n_frame) + "\n fps = " + str(fps)
-                #cv2.putText(frame8b, text,
-                #            (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
-
-                # cv2.imshow(str(i), frame8b)
-                # cv2.waitKey(1)
 
                 old_id[i] = n_frame
                 old_timestamp[i] = ts
@@ -179,24 +172,20 @@ class HeartRateWorker(MultimodalWorker):
             time.sleep(1/300)
 
 
-class DataFusionThread(MultimodalWorker):
+class RGBPOSLandmarkThread(MultimodalWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
     change_plot_signal = pyqtSignal(float, float)
     change_ear_signal = pyqtSignal(float, float)
     def __init__(self):
         MultimodalWorker.__init__(self)
-        # self.segment_func = Segmenter()
         self.segment_func = segment_skin
         self.hr = None
         self.hr_real = None
         self.ear = None
-        # self.inpainting_func = Inpainter()
 
     def run(self):
-        # example thread that does visualization and computationally heavy fusion / stereo, ...
         old_timestamp = [-1] * len(self._cams)
         old_id = [-1] * len(self._cams)
-        initialized = False
 
         mean_rgb_frames = []
         time_stamps = []
@@ -210,9 +199,7 @@ class DataFusionThread(MultimodalWorker):
         starting_time = -1
         counter = 0
 
-        mp_drawing = mp.solutions.drawing_utils
         mp_face_mesh = mp.solutions.face_mesh
-        drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=0, color=(0, 0, 0))
 
         face_mesh = mp_face_mesh.FaceMesh(
             static_image_mode=False,
@@ -226,7 +213,6 @@ class DataFusionThread(MultimodalWorker):
             for (i, cam) in enumerate(self._cams):
                 if len(cam) < 1:
                     continue
-                # (n_frame, ts, frame) = cam.frame_deque.pop()
                 (n_frame, ts, frame) = cam[-1]
                 counter += 1
                 if starting_time == -1:
@@ -234,18 +220,10 @@ class DataFusionThread(MultimodalWorker):
 
                 n, m = frame.shape[0:2]
 
-                #(n_frame, ts) = cam.latest_frame.get_meta()
-
                 if n_frame is None or n_frame == old_id[i]:
                     continue
 
-                #frame = cam.latest_frame.get_frame()
-
-                # fps = 1000000 / (ts - old_timestamp[i] + 0.00001)
-
-                frame8b = frame.copy()  # cv2.cvtColor(frame, cv2.COLOR_BAYER_BG2BGR)
-                # frame8b = cv2.resize(frame8b, None, fx=0.5, fy=0.5)
-                # frame8b = cv2.resize(frame8b, (256, 256))
+                frame8b = frame.copy()
                 selfie_results = selfie.process(frame8b)
                 output_frame = self.segment_func(frame8b)
 
@@ -254,12 +232,6 @@ class DataFusionThread(MultimodalWorker):
                     l = np.array(
                         [[m * lm.x, n * lm.y, lm.z] for lm in landmarks[0].landmark])
                     output_frame = draw_landmarks(frame8b.copy(), l)
-
-                    #p4 = 243
-                    #p1 = 130
-
-                    #p2 = 27
-                    #p3 = 23
 
                     p1 = 27
                     p2 = 23
@@ -274,7 +246,6 @@ class DataFusionThread(MultimodalWorker):
 
                     l_raw = np.array(
                         [[lm.x, lm.y, lm.z] for lm in landmarks[0].landmark])
-                    # 3D euclidean distance:
                     distance = norm(l_raw[p1], l_raw[p4]) + norm(l_raw[p2], l_raw[p3])
                     distance *= 0.5
                     ear_array.append(distance)
@@ -285,13 +256,11 @@ class DataFusionThread(MultimodalWorker):
                         ts_array = list(np.array(ts_array)[-150:])
                         ear_array = list(np.array(ear_array)[-150:])
 
-                # cv2.imshow("frame", frame8b)
 
                 if selfie_results.segmentation_mask is not None:
                     mask = selfie_results.segmentation_mask > 0.4
 
-                    # frame8b = segment_image(frame8b, mask)
-                    frame8b = self.segment_func(frame8b)
+                    frame8b, _ = self.segment_func(frame8b)
 
                     mean_rgb = np.sum(frame8b.astype(float), axis=(0, 1)) / np.sum(mask.astype(float), axis=(0, 1))
                     mean_rgb_frames.append(mean_rgb)
@@ -299,14 +268,13 @@ class DataFusionThread(MultimodalWorker):
 
                     if len(mean_rgb_frames) > 100:
                         ts_arr = np.array(time_stamps)
-                        # print(ts_arr)
+
                         time_resampled = np.arange(ts_arr[0], ts_arr[-1], 1000000 / fps, float)
                         idx = np.round(np.interp(time_resampled, ts_arr,
                                        np.arange(0, ts_arr.shape[0]))).astype(int)
                         idx = idx[-100:]
 
-                        start = time.time()
-                        signal = _pos_calculation(np.array(mean_rgb_frames)[idx])
+                        signal = _pos_calculation(np.array(mean_rgb_frames)[idx], fps)
 
                         fourier = np.fft.fft(signal)
                         freq = 60 * np.fft.fftfreq(signal.size, d=1/fps)
@@ -330,11 +298,6 @@ class DataFusionThread(MultimodalWorker):
                         if len(hr_values) > 300:
                             hr_values = list(np.array(hr_values)[-300:])
 
-                        # freqs, spectrum = _createSpectrum(signal, 5)
-                        #print(signal.shape)
-                        #print("pos estimation took " + str(time.time() - start))
-                        #print("heart rate is " + str(np.mean(np.array(hr_values))))
-
                         time_stamps = list(ts_arr[-100:])
                         mean_rgb_frames = list(np.array(mean_rgb_frames)[-100:])
 
@@ -353,14 +316,6 @@ class DataFusionThread(MultimodalWorker):
                                                time_stamp)
                 self.change_plot_signal.emit(hr_value, time_stamp)
                 self.change_ear_signal.emit(ear_value, time_stamp)
-                # cv2.imshow("segmented", frame8b)
-                # cv2.waitKey(1)
-                #text = "#frame " + str(n_frame) + "\n fps = " + str(fps)
-                #cv2.putText(frame8b, text,
-                #            (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
-
-                # cv2.imshow(str(i), frame8b)
-                # cv2.waitKey(1)
 
                 old_id[i] = n_frame
                 old_timestamp[i] = ts
@@ -377,24 +332,30 @@ class DataFusionThread(MultimodalWorker):
         return self.ear
 
 
-def _pos_calculation(mean_rgb, fps=30):
-    win_size = int(fps * 1.6)  # "l" in the paper
-    H = np.zeros(mean_rgb.shape[0])
-    P_p = np.array([[0, 1, -1], [-2, 1, 1]])  # Projection matrix
-
-    for t in range(0, (mean_rgb.shape[0] - win_size)):
-        # Spatial averaging
-        C = mean_rgb[t:t + win_size - 1, :].T
-        # Temporal normalization
-        C_n = np.matmul(np.linalg.inv(np.diag(np.mean(C, axis=1))), C)
-        # Projection
-        S = np.matmul(P_p, C_n)
-        # Alpha Tuning --> [1 alpha] * S
-        # alpha = numpy.std(S[0]) / numpy.std(S[1])
-        # h = S[0] +  alpha * S[1]
-        h = np.matmul(np.array([1, np.std(S[0]) / np.std(S[1])]), S)
-        # Overlap adding
-        H[t:t + win_size - 1] = H[t:t + win_size - 1] + (h - np.mean(h)) / np.std(h)
-
-    signal = H.flatten()
-    return signal
+def _pos_calculation(C, fps=30):
+    """
+    Implementation of the Plane-Orthogonal-to-Subspace (POS) method for remote
+    photoplethysmography (rPPG), based on:
+    W. Wang, A.C. den Brinker, S. Stuijk, and G. de Haan,
+    "Algorithmic Principles of Remote PPG,"
+    IEEE Transactions on Biomedical Engineering, 64(7), 2017, 1479–1491.
+    """
+    L = int(fps * 1.6)  # "l" in the paper (window size)
+    H = np.zeros(C.shape[0], dtype=float)
+    P = np.array([[0, 1, -1],
+                  [-2, 1,  1]])
+    for n in range(C.shape[0] - L):
+        C_mn = C[n:n+L].T
+        diag_inv = np.linalg.inv(np.diag(np.mean(C_mn, axis=1)))
+        C_norm = diag_inv @ C_mn
+        S = P @ C_norm
+        alpha = 0.0
+        if np.std(S[1]) != 0:
+            alpha = np.std(S[0]) / np.std(S[1])
+        h = S[0] + alpha * S[1]
+        h = h - np.mean(h)
+        std_h = np.std(h)
+        if std_h != 0:
+            h /= std_h
+        H[n:n+L] += h
+    return H

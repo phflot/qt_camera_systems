@@ -1,14 +1,36 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR & CONTEXT DISCLAIMER
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de), FLIR Systems
+#
+# For citation, please refer to the project README.
+#
+# =============================================================================
+# Copyright (c) 2001-2023 FLIR Systems, Inc. All Rights Reserved.
+#
+# This software is the confidential and proprietary information of FLIR
+# Integrated Imaging Solutions, Inc. ("Confidential Information"). You
+# shall not disclose such Confidential Information and shall use it only in
+# accordance with the terms of the license agreement you entered into
+# with FLIR Integrated Imaging Solutions, Inc. (FLIR).
+#
+# FLIR MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE
+# SOFTWARE, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+# PURPOSE, OR NON-INFRINGEMENT. FLIR SHALL NOT BE LIABLE FOR ANY DAMAGES
+# SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+# THIS SOFTWARE OR ITS DERIVATIVES.
+# =============================================================================
+# ------------------------------------------------------------------------------------
+
 try:
     import torch
     import PySpin
     FLIR_AVAILABLE = True
 except ImportError:
     FLIR_AVAILABLE = False
-from time import time
 from multicamera_systems.cameras import GenericCamera
 from time import time
-from threading import Thread
-from collections import deque
 from PyQt6.QtCore import QThread, pyqtSignal
 import numpy as np
 
@@ -32,23 +54,17 @@ class ThermalGrabber(QThread):
         # self.frame_deque = deque()
 
     def run(self):
-        # Thermal camera initialization (Spinnaker example):
-        # Retrieve singleton reference to system object
         system = PySpin.System.GetInstance()
 
         # Get current library version
         version = system.GetLibraryVersion()
         print('Library version: %d.%d.%d.%d' % (version.major, version.minor, version.type, version.build))
 
-        # Retrieve list of cameras from the system
         cam_list = system.GetCameras()
 
         num_cameras = cam_list.GetSize()
 
         print('Number of cameras detected: %d' % num_cameras)
-
-        #if self.__cam_id > num_cameras:
-        #    return
 
         self.__cam = cam_list[self.__cam_id]
 

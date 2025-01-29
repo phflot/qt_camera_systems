@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 from .base_workers import MultimodalWorker
 from PyQt6.QtCore import pyqtSignal
 import numpy as np
@@ -71,3 +82,4 @@ class MediapipeLandmarkWorker(MultimodalWorker):
                     self.new_frame.emit(frame, counter, ts - starting_time)
                     self.new_landmarks.emit(l, counter, ts - starting_time)
                     counter += 1
+            time.sleep(1/30)

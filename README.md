@@ -97,6 +97,12 @@ Space and numbers 1-5 control the motion magnification output.
 
 ## Citation
 
+This software is built on original routines developed during my PhD research
+at Saarland University. While I occasionally used institutional resources
+(e.g., equipment for testing), the core logic and concepts are my own work.
+No proprietary or confidential materials from any university, company, or
+third party are included here to the best of my knowledge.
+
 If you use this code in work for publications, please cite in the following way.
 
 **1. Camera routines**:
@@ -117,6 +123,21 @@ If you use this code in work for publications, please cite in the following way.
 
 **2. Motion magnification**:
 
+  > Flotho, P., Heiß, C., Steidl, G., & Strauss, D. J. (2022, July). Lagrangian motion magnification with landmark-prior and sparse PCA for facial microexpressions and micromovements. In 2022 44th Annual International Conference of the IEEE Engineering in Medicine & Biology Society (EMBC) (pp. 2215-2218). IEEE.
+  
+  ```bibtex
+  @inproceedings{flotho2022lagrangian,
+    title={Lagrangian motion magnification with landmark-prior and sparse PCA for facial microexpressions and micromovements},
+    author={Flotho, Philipp and Hei{\ss}, Cosmas and Steidl, Gabriele and Strauss, Daniel J},
+    booktitle={2022 44th Annual International Conference of the IEEE Engineering in Medicine \& Biology Society (EMBC)},
+    pages={2215--2218},
+    year={2022},
+    organization={IEEE}
+  }
+  ```
+
+and
+
   > Flotho, P., Heiss, C., Steidl, G., & Strauss, D. J. (2023). Lagrangian motion magnification with double sparse optical flow decomposition. Frontiers in Applied Mathematics and Statistics, 9, 1164491.
   
   ```bibtex
@@ -128,21 +149,6 @@ If you use this code in work for publications, please cite in the following way.
     pages={1164491},
     year={2023},
     publisher={Frontiers Media SA}
-  }
-  ```
-
-  and for facial landmark-based decomposition:
-  
-  > Flotho, P., Heiß, C., Steidl, G., & Strauss, D. J. (2022, July). Lagrangian motion magnification with landmark-prior and sparse PCA for facial microexpressions and micromovements. In 2022 44th Annual International Conference of the IEEE Engineering in Medicine & Biology Society (EMBC) (pp. 2215-2218). IEEE.
-  
-  ```bibtex
-  @inproceedings{flotho2022lagrangian,
-    title={Lagrangian motion magnification with landmark-prior and sparse PCA for facial microexpressions and micromovements},
-    author={Flotho, Philipp and Hei{\ss}, Cosmas and Steidl, Gabriele and Strauss, Daniel J},
-    booktitle={2022 44th Annual International Conference of the IEEE Engineering in Medicine \& Biology Society (EMBC)},
-    pages={2215--2218},
-    year={2022},
-    organization={IEEE}
   }
   ```
 
@@ -158,3 +164,65 @@ If you use this code in work for publications, please cite in the following way.
     year={2024}
   }
   ```
+
+## License
+
+The landmarking models that the landmarking code downloads and which are required for thermal landmarking are licensed under the [Attribution-NonCommercial-ShareAlike 4.0 International](LICENSE.txt) license as the models are provided as "Results" from the [FaceSynthetics dataset](https://github.com/microsoft/FaceSynthetics).
+
+This Software may incorporate or reference code examples, libraries, or other materials from third parties (e.g., FLIR). Any such third-party materials are subject to their own license terms, which you must comply with in addition to this license. In the event of any direct conflict between this license and a third-party license, the third-party license terms shall prevail for that portion of the Software.
+
+This code has been shared for internal use at SNNU, htw saar and EmRoLab. 
+If you have received a copy, please adhere to the following license terms.
+
+0. **Internal Scope and Permission Grant**
+   - You may use, copy, and modify this Work for academic, educational, or research 
+     purposes strictly within SNNU, htw saar and EmRoLab. 
+   - Distribution outside of these institutions or any commercial usage 
+     requires a separate, written permission from the Authors.
+1. **Retention of Notices and Indication of Changes**
+   - You must retain the above copyright notice and this license in all copies
+     or substantial portions of the Work.
+   - If you make any modifications (including translations or format-shifting),
+     you must clearly indicate in any copies or substantial portions of the
+     Work that changes were made, and include a brief description of those changes.
+
+2. **Attribution**
+   - You must give **appropriate credit** to the original author(s), provide a
+     link to the source (e.g., https://github.com/phflot), and indicate that the Work
+     is licensed under this "Academic Attribution" license.
+   - Appropriate credit, at a minimum, includes the name of the original author,
+     the title of the Work (if provided), and a link to this
+     license or repository.
+
+3. **Academic Citation**
+   - If you (the licensee) publish or publicly present any result, demonstration,
+     or other output (including websites, demos, or research papers) that directly
+     uses or builds upon this Work, you must explicitly credit the Author, and cite
+   - the relevant publication(s) listed in this README or documentation.
+   - The credit must be reasonably visible and state, for example:
+     > “Portions of this work use or adapt software created by [...].”
+   - Additionally, if a specific publication is requested (see README),
+     please cite it in your bibliography.
+
+4. **No Additional Restrictions**
+   - You may not apply legal terms or technological measures that legally
+     restrict others from doing anything the license permits.
+
+5. **No Endorsement**
+   - Nothing in this license constitutes or may be interpreted as permission
+     to assert or imply that the Author endorses you or your use of the Work.
+
+6. **Disclaimer of Warranty**
+   - THE WORK IS PROVIDED “AS IS,” WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+     THE AUTHOR(S) OR COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES,
+     OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+     ARISING FROM, OUT OF, OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER
+     DEALINGS IN THE WORK.
+
+7. **License Reference**
+   - A copy of this "Academic Attribution" license text must be included with
+     all distributions of the Work or any substantial portion thereof. If the
+     full text is not included in a file named `LICENSE`, you must include a
+     reference to the original license location (e.g., a URL to this README).

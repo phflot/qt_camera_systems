@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 import mediapipe as mp
 import numpy as np
 import cv2

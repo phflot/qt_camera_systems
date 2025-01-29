@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 from neurovc.momag import MagnificationTask, AlphaLooper
 from PyQt6.QtCore import pyqtSignal, pyqtSlot, Qt
 import time

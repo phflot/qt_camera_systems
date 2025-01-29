@@ -1,3 +1,14 @@
+# ------------------------------------------------------------------------------------
+# AUTHOR STATEMENT
+#
+# Author: Philipp Flotho (philipp.flotho[at]uni-saarland.de)
+#
+# For citation, please refer to the project README.
+# If you believe any confidential or proprietary content is included, please notify me.
+#
+# Copyright (c) 2025, Philipp Flotho
+# ------------------------------------------------------------------------------------
+
 import time
 from collections import deque
 import numpy as np
@@ -6,6 +17,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 
 class FrameGrabber(QThread):
     new_frame = pyqtSignal(np.ndarray, float, float)
+
     def __init__(self, cam):
         QThread.__init__(self)
         self.cam = cam

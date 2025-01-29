@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QApplication
 
 from multicamera_systems.cameras import WebcamCamera, FrameGrabber
 from multicamera_systems.ui import MrPlotterRows, SyncVideoLine, VideoSwitcher
-from multicamera_systems.pipeline import DataIOThread, DataFusionThread
+from multicamera_systems.pipeline import DataIOThread, RGBPOSLandmarkThread
 
 
 class RGBDemo(QWidget):
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     left = FrameGrabber(cam_left)
 
     dataIO_worker = DataIOThread()
-    visualization_worker = DataFusionThread()
+    visualization_worker = RGBPOSLandmarkThread()
     visualization_worker.add_cam(left)
 
     left.start()
