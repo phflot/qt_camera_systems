@@ -100,8 +100,9 @@ Space and numbers 1-5 control the motion magnification output.
 This software is built on original routines developed during my PhD research
 at Saarland University. While I occasionally used institutional resources
 (e.g., equipment for testing), the core logic and concepts are my own work.
-No proprietary or confidential materials from any university, company, or
-third party are included here to the best of my knowledge.
+Any proprietary or confidential materials from any university, company, or
+third party included here are to the best of my knowledge clearly marked as such.
+Copyright (c) 2025, Philipp Flotho.
 
 If you use this code in work for publications, please cite in the following way.
 
