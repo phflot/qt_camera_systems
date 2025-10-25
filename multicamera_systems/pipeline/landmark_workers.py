@@ -46,6 +46,35 @@ class ThermalLandmarkWorker(MultimodalWorker):
             time.sleep(1/30)
 
 
+class MultiThermalLandmarkWorker(MultimodalWorker):
+    new_frame = pyqtSignal(np.ndarray, float, float)
+    new_landmarks = pyqtSignal(object, float, float)
+
+    def __init__(self, n_landmarks=478):
+        MultimodalWorker.__init__(self)
+        self.landmarker = ThermalLandmarks(n_landmarks=n_landmarks)
+
+    def run(self):
+        ts_baseline = -1
+        counter = 0
+        while True:
+            for (i, cam) in enumerate(self._cams):
+                if len(cam) < 1:
+                    continue
+                (n_frame, ts, frame) = cam[-1]
+                if ts_baseline == -1:
+                    ts_baseline = ts
+                if np.issubdtype(frame.dtype, np.floating):
+                    frame_raw = frame
+                else:
+                    frame_raw = map_temp(frame, "A655")
+                landmarks, _ = self.landmarker.process(frame_raw, multi=True)
+                self.new_frame.emit(frame, counter, ts - ts_baseline)
+                self.new_landmarks.emit(landmarks, counter, ts - ts_baseline)
+                counter += 1
+            time.sleep(1/30)
+
+
 class MediapipeLandmarkWorker(MultimodalWorker):
     new_frame = pyqtSignal(np.ndarray, float, float)
     new_landmarks = pyqtSignal(np.ndarray, float, float)

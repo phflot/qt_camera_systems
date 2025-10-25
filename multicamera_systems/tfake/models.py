@@ -144,7 +144,7 @@ class ThermalLandmarks:
         dmm = DMMv2(n_landmarks=n_landmarks)
         self.n_landmarks = n_landmarks
 
-        model_path = _get_model()
+        model_path = _get_model(str(n_landmarks))
         print(model_path)
         dmm.load_state_dict(torch.load(model_path, weights_only=True),
                             strict=False)
@@ -168,7 +168,7 @@ class ThermalLandmarks:
         else:
             self.transform = lambda x: x
 
-    def process(self, image, sliding_window=False):
+    def process(self, image, sliding_window=False, multi=False):
         if self.img_shape is None:
             img_shape = image.shape[:2]
             wp = _warping_depth(self.eta, 100, *img_shape)
@@ -184,6 +184,8 @@ class ThermalLandmarks:
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if not sliding_window:
+            if multi:
+                return self.get_landmarks_multi(image)
             return self.get_landmarks_single(image)
 
         best_score = np.inf
@@ -258,6 +260,28 @@ class ThermalLandmarks:
         lm_scaled, confidences = self._refine_landmarks(img, bbox)
 
         return lm_scaled, confidences
+
+    def get_landmarks_multi(self, img):
+        results = self.last_sparse_lm
+        if len(results) == 0:
+            return [], []
+        landmarks = []
+        confidences_all = []
+        for result in results:
+            lm_scaled = result["landmarks"]
+            lm_scaled = np.array(lm_scaled).reshape((-1, 2))
+            bbox = result["box"]
+            bbox = np.array(bbox).reshape((-1, 2))
+            if lm_scaled is None:
+                raise ValueError("Use mediapipe for dense RGB landmarks!")
+            if -1 in lm_scaled:
+                landmarks.append(- np.ones((self.n_landmarks, 2)))
+                confidences_all.append(np.zeros(self.n_landmarks))
+                continue
+            refined, confidences = self._refine_landmarks(img, bbox)
+            landmarks.append(refined)
+            confidences_all.append(confidences)
+        return landmarks, confidences_all
 
     def get_landmarks(self, img, stride=50, refine=True):
         """Sliding window implementation for the landmarks"""

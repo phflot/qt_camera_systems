@@ -55,7 +55,11 @@ class ThermalLandmarkVisualizer(LandmarkWorker):
 
                 frame = normalize_color(frame, color_map=cv2.COLORMAP_INFERNO)
                 if self._lm_mode == "visible":
-                    frame = draw_landmarks(frame, landmarks)
+                    if isinstance(landmarks, list):
+                        for lm in landmarks:
+                            frame = draw_landmarks(frame, lm)
+                    else:
+                        frame = draw_landmarks(frame, landmarks)
 
                 self.new_frame.emit(frame, 0, ts - ts_baseline)
 
