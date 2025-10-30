@@ -8,7 +8,7 @@ import sys
 import time
 
 
-class VIScreenerMomagTest2(QWidget):
+class VitalSignMomagTest2(QWidget):
     key_press_signal = pyqtSignal(object)
 
     def __init__(self, thermal):
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     thermal.start()
 
     app = QApplication(sys.argv)
-    a = VIScreenerMomagTest2(thermal)
+    a = VitalSignMomagTest2(thermal)
     a.show()
 
     sys.exit(app.exec())

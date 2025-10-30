@@ -7,7 +7,7 @@ from multicamera_systems.pipeline import MotionMagnificationThread
 from multicamera_systems.ui import SyncVideoLine, VideoSwitcher
 
 
-class VIScreenerMomagTest2(QWidget):
+class VitalSignMomagTest2(QWidget):
     key_press_signal = pyqtSignal(object)
 
     def __init__(self, left):
@@ -54,7 +54,7 @@ def momag_webcam():
     left.start()
 
     app = QApplication(sys.argv)
-    a = VIScreenerMomagTest2(left)
+    a = VitalSignMomagTest2(left)
     a.show()
 
     sys.exit(app.exec())
@@ -71,7 +71,7 @@ def momag_ximea():
     left.start()
 
     app = QApplication(sys.argv)
-    a = VIScreenerMomagTest2(left)
+    a = VitalSignMomagTest2(left)
     a.show()
 
     sys.exit(app.exec())

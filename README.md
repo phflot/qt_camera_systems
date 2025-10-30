@@ -7,7 +7,7 @@
 
 Clone the repository via
 ```
-$ git clone ssh://git@erlgit.htwsaar.de:2222/snnu/computer-vision/qt_camera_systems.git
+$ git clone git@github.com:phflot/qt_camera_systems.git
 ```
 
 ## Requirements
@@ -33,7 +33,7 @@ onto a metal plate with the same pattern cutout.
 - **Thermal data** mapping and region-of-interest temperature measurement (e.g., eye, mouth).  
 - **Calibration pattern**: See `calibration_pattern.pdf` for the 4×13 circular board layout.  
 - **GUI Applications**:
-  - `VIScreener` for multimodal display of multiple cameras (thermal, NIR, etc.).
+  - `VitalSignApp` for multimodal display of multiple cameras (thermal, NIR, etc.) and vital signs such as heartrate.
   - `Momag` for motion magnification demonstrations.
   - `MomagWebcam` for motion magnification with a webcam.
 
@@ -52,8 +52,7 @@ onto a metal plate with the same pattern cutout.
   ```
 
 3. **Install `Spinnaker` SDK and Python bindings**:
-- Install the `Spinnaker SDK` from the resources folder in the repository:
-  - [Spinnaker SDK Installer](resources/SpinnakerSDK_FULL_4.0.0.116_x64.exe)
+- Download and install the `Spinnaker SDK` from the TELEDYNE website
 - Install the Python bindings 
   - (windows):
     ```
@@ -67,8 +66,7 @@ onto a metal plate with the same pattern cutout.
   - (linux): Almost the same as mac.
 
 4. **Install `XIMEA` API**:
-- Install the `XIMEA API` from the repository:
-  - [XIMEA API Installer](resources/XIMEA_APIInstaller.exe)
+- Install the `XIMEA API` from the ximea website
 - After installation, manually copy the `ximea` Python bindings to the appropriate site-packages directory of the Python environment. The bindings are typically located in:
   ```
   C:\Program Files\XIMEA\API\python\ximea
@@ -80,19 +78,19 @@ onto a metal plate with the same pattern cutout.
 
 ## Run the applications
 
-To run the VIScreen_demo, connect one FLIR camera and one XiC ximea camera to your computer and run
+To run the Multicamera_demo, connect one FLIR camera and one XiC ximea camera to your computer and run
 ```
-python -m multicamera_systems.apps.VIScreen_demo
+python -m multicamera_systems.apps.Multicamera_demo
 ```
 or 
 ```
-python -m multicamera_systems.apps.VIScreen_webcam
+python -m multicamera_systems.apps.Pulse_momag_webcam
 ```
 for the webcam only version. The app can be controlled with the arrow keys to turn landmarks on and off and switch the video view. 
 
 Space and numbers 1-5 control the motion magnification output.
 
-![Fig1](img/VIScreener.jpg)
+![Fig1](img/VitalSignApp.jpg)
 
 
 ## Citation
@@ -168,18 +166,12 @@ and
 
 ## License
 
-The landmarking models that the landmarking code downloads and which are required for thermal landmarking are licensed under the [Attribution-NonCommercial-ShareAlike 4.0 International](LICENSE.txt) license as the models are provided as "Results" from the [FaceSynthetics dataset](https://github.com/microsoft/FaceSynthetics).
+The code in this repository is licensed under the [Attribution-NonCommercial-ShareAlike 4.0 International](LICENSE.txt) license derived from the landmark models which are provided as "Results" from the [FaceSynthetics dataset](https://github.com/microsoft/FaceSynthetics).
 
 This Software may incorporate or reference code examples, libraries, or other materials from third parties (e.g., FLIR). Any such third-party materials are subject to their own license terms, which you must comply with in addition to this license. In the event of any direct conflict between this license and a third-party license, the third-party license terms shall prevail for that portion of the Software.
 
-This code has been shared for internal use at SNNU, htw saar and EmRoLab. 
-If you have received a copy, please adhere to the following license terms.
+If you have received a copy of this code, please adhere to the following license terms.
 
-0. **Internal Scope and Permission Grant**
-   - You may use, copy, and modify this Work for academic, educational, or research 
-     purposes strictly within SNNU, htw saar and EmRoLab. 
-   - Distribution outside of these institutions or any commercial usage 
-     requires a separate, written permission from the Authors.
 1. **Retention of Notices and Indication of Changes**
    - You must retain the above copyright notice and this license in all copies
      or substantial portions of the Work.

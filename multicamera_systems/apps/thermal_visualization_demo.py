@@ -6,7 +6,7 @@ import PyQt6.QtWidgets as qtw
 import sys
 
 
-class VIScreenerMomagTest2(QWidget):
+class VitalSignMomagTest2(QWidget):
     def __init__(self, thermal):
         super().__init__()
         self.setWindowTitle("Thermal Camera - RoI Temperature")
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     thermal.start()
 
     app = QApplication(sys.argv)
-    a = VIScreenerMomagTest2(thermal)
+    a = VitalSignMomagTest2(thermal)
     a.show()
 
     sys.exit(app.exec())

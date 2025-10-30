@@ -18,7 +18,7 @@ from multicamera_systems.cameras import (
 import time
 
 
-class VIScreener(QWidget):
+class VitalSignApp(QWidget):
     def __init__(self, left):
         super().__init__()
         self.setWindowTitle("Thermal Camera - RoI Temperature")
@@ -91,7 +91,7 @@ def vi_screen_main():
     left = FrameGrabber(cam_left)
 
     app = QApplication(sys.argv)
-    a = VIScreener(left)
+    a = VitalSignApp(left)
     a.show()
 
     sys.exit(app.exec())
